@@ -11,28 +11,24 @@
   --hover-blue: #2563EB;
   --gradient-primary: linear-gradient(135deg, #2563EB 0%, #EF4444 100%);
 
-  /* Secondary & Theme fallbacks */
-  --bg-primary: var(--bg-page);
+  /* Alias tokens used throughout components */
+  --bg-primary: #F8FAFC;
   --bg-secondary: #F1F5F9;
-  --text-main: var(--text-heading);
-  --text-muted: var(--text-body);
-  --border-glass: var(--border);
+  --text-main: #0F172A;
+  --text-muted: #64748B;
+  --border-glass: #E2E8F0;
   --border-glass-bright: #CBD5E1;
-  
+
+  /* Accent tokens used in BreathingWidget */
+  --accent-teal: #0EA5E9;
+  --accent-purple: #8B5CF6;
+  --accent-emerald: #10B981;
+
   --font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-heading: 'Outfit', sans-serif;
 }
 
-[data-theme='dark'] {
-  --bg-page: #0F172A;
-  --bg-card: #1E293B;
-  --bg-secondary: #334155;
-  --text-heading: #F8FAFC;
-  --text-body: #94A3B8;
-  --border: rgba(255, 255, 255, 0.1);
-  --border-glass-bright: rgba(255, 255, 255, 0.2);
-}
-
+/* Force light theme always — no dark mode overrides */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -41,14 +37,21 @@
   -webkit-font-smoothing: antialiased;
 }
 
-body {
-  background-color: var(--bg-page);
-  color: var(--text-heading);
+html, body {
+  background-color: var(--bg-page) !important;
+  color: var(--text-main) !important;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
-  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Prevent any system dark-mode media query from taking effect */
+@media (prefers-color-scheme: dark) {
+  html, body {
+    background-color: var(--bg-page) !important;
+    color: var(--text-main) !important;
+  }
 }
 
 .glass-panel {
@@ -100,6 +103,11 @@ body {
   50% { transform: scaleY(1.2); }
 }
 
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .pulse-button-active {
   animation: pulse-ring 1.8s infinite cubic-bezier(0.45, 0, 0.55, 1);
 }
@@ -128,4 +136,16 @@ body {
   margin: 0 auto;
   padding: 0 1.5rem;
   width: 100%;
+}
+
+/* Ensure all inputs and selects render with light backgrounds */
+input, textarea, select {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-main) !important;
+  border-color: var(--border-glass) !important;
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--text-muted) !important;
+  opacity: 1;
 }

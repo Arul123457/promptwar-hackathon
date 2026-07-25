@@ -290,12 +290,12 @@ export default function CrisisMode({ onLogIncident, user }) {
           padding: '28px',
           marginBottom: '32px',
           borderLeft: '5px solid var(--primary-blue)',
-          background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.85) 0%, rgba(37, 99, 235, 0.12) 100%)'
+          background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.06) 0%, rgba(30, 58, 138, 0.04) 100%)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <Sparkles size={24} color="var(--primary-blue)" />
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, fontFamily: 'var(--font-heading)' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--text-heading)' }}>
                 Altruist AI Grounding Guidance
               </h3>
             </div>
@@ -309,22 +309,22 @@ export default function CrisisMode({ onLogIncident, user }) {
                   <div className="audio-bar" />
                 </div>
               )}
-              <button
-                onClick={() => speechService.speak(aiResponse)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '6px 14px',
-                  borderRadius: '8px',
-                  border: '1px solid var(--border-glass)',
-                  background: 'var(--bg-secondary)',
-                  color: 'var(--primary-blue)',
-                  fontWeight: 600,
-                  fontSize: '0.85rem',
-                  cursor: 'pointer'
-                }}
-              >
+                <button
+                  onClick={() => speechService.speak(aiResponse)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '6px 14px',
+                    borderRadius: '8px',
+                    border: '1px solid var(--border)',
+                    background: '#ffffff',
+                    color: 'var(--primary-blue)',
+                    fontWeight: 600,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer'
+                  }}
+                >
                 <Volume2 size={16} /> Replay Voice
               </button>
             </div>
@@ -333,7 +333,7 @@ export default function CrisisMode({ onLogIncident, user }) {
           <p style={{
             fontSize: '1.12rem',
             lineHeight: '1.7',
-            color: 'var(--text-main)',
+            color: 'var(--text-heading)',
             whiteSpace: 'pre-line'
           }}>
             {aiResponse}

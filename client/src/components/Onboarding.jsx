@@ -75,7 +75,7 @@ export default function Onboarding({ onComplete, user }) {
             padding: '6px 14px',
             borderRadius: '20px',
             background: 'rgba(59, 130, 246, 0.15)',
-            color: '#60a5fa',
+            color: 'var(--secondary-blue)',
             fontSize: '0.8rem',
             fontWeight: 700,
             marginBottom: '12px'
