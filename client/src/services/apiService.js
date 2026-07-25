@@ -4,7 +4,19 @@
  * NEVER calls Groq or internal APIs directly from the browser.
  */
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+const getApiBaseUrl = () => {
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL.replace(/\/$/, '');
+  }
+  // If running locally in dev mode
+  if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+    return 'http://localhost:5000';
+  }
+  // Production single-deployment Vercel rewrite
+  return '';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 async function postJSON(endpoint, data) {
   const url = `${API_BASE_URL}${endpoint}`;
