@@ -72,7 +72,9 @@ async function generateGroqCompletion(systemPrompt, userPrompt, fallbackText) {
       temperature: 0.4,
       max_tokens: 450,
     });
-    return completion.choices[0]?.message?.content?.trim() || fallbackText;
+    const text = completion.choices[0]?.message?.content?.trim() || fallbackText;
+    // Strip markdown asterisks (**) and hashtags (#) to prevent UI formatting glitches
+    return text.replace(/\*\*/g, '').replace(/###?/g, '').trim();
   } catch (error) {
     console.error('Groq Execution Error:', error.message);
     return fallbackText;
@@ -203,7 +205,7 @@ Provide a single concise response with two clear parts:
 1. Recovery Script: 3 short, soothing bullet points for immediate craving interruption and grounding — avoid clinical jargon.
 2. Safety Anchor: 1 reassuring sentence reminding them their support network is available and this moment will pass.
 
-IMPORTANT: Never shame or lecture. Speak as a compassionate peer who believes in their recovery.`;
+CRITICAL FORMATTING RULE: Do NOT use markdown bolding (double asterisks **) or headings in your output. Return clean plain text bullets only.`;
 
     const userPrompt = text
       ? `The user in recovery is experiencing a crisis and said: "${text}". Provide immediate craving interruption and grounding support.`
@@ -297,7 +299,7 @@ Provide specific, evidence-based, trauma-informed guidance to the caregiver. Foc
 2. How to avoid enabling behaviors while maintaining compassion
 3. When to call for professional intervention (SAMHSA 988 or local crisis services)
 
-Never shame the patient. Empower the caregiver with clear, actionable language. Keep response under 200 words.`;
+CRITICAL FORMATTING RULE: Do NOT use markdown bolding (double asterisks **) or header tags. Return clean plain text bullet points only (under 200 words).`;
 
   const userPrompt = query
     ? `Caregiver asks: "${query}"`
@@ -339,7 +341,7 @@ app.get('/api/caregiver/patient-trends', async (req, res) => {
 // 11. Learn Hub Educational Q&A
 app.post('/api/learn/query', async (req, res) => {
   const query = sanitizeInput(req.body.query);
-  const systemPrompt = `You are Altruist AI — an educational AI assistant specialized in substance use disorder recovery, addiction medicine, and caregiver support.
+  const learnSystemPrompt = `You are Altruist AI — an educational AI assistant specialized in substance use disorder recovery, addiction medicine, and caregiver support.
 
 Your role is to provide clear, evidence-based, stigma-free answers that empower individuals in recovery and their families.
 Draw from established frameworks: SMART Recovery, AA/NA 12-step principles, Motivational Interviewing, Harm Reduction, and trauma-informed care.
@@ -349,10 +351,10 @@ Always:
 - Validate the user's experience without judgment
 - Reference SAMHSA guidelines and evidence-based practices
 - Remind users of crisis resources (988 Lifeline, SAMHSA 1-800-662-4357) when relevant
-- Keep answers practical and actionable (under 200 words)`;
+- CRITICAL FORMATTING RULE: Do NOT use markdown bolding (double asterisks **) or header tags. Return clean plain text bullet points only (under 200 words).`;
   const fallbackText = `Grounding techniques redirect focus away from racing thoughts and back to the present moment.\n\nKey Strategy - 5-4-3-2-1:\n- 5 things you can SEE\n- 4 things you can TOUCH\n- 3 things you can HEAR\n- 2 things you can SMELL\n- 1 thing you can TASTE`;
 
-  const responseText = await generateGroqCompletion(systemPrompt, `Question: "${query}"`, fallbackText);
+  const responseText = await generateGroqCompletion(learnSystemPrompt, `Question: "${query}"`, fallbackText);
   res.json({ success: true, content: responseText });
 });
 

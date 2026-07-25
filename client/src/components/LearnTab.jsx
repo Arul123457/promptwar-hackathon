@@ -205,7 +205,7 @@ export default function LearnTab() {
                     fontSize: '0.72rem', fontWeight: 800, marginTop: '2px'
                   }}>{i + 1}</div>
                   <p style={{ fontSize: '0.95rem', color: 'var(--text-heading)', lineHeight: 1.65, fontWeight: 500 }}>
-                    {line.replace(/^[•\-*\d.\s]+/, '').trim()}
+                    {line.replace(/^[•\-*\d.\s]+/, '').replace(/\*\*/g, '').trim()}
                   </p>
                 </div>
               ))}

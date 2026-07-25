@@ -329,7 +329,7 @@ export default function CaregiverMode({ incidentLog, user }) {
                     {i + 1}
                   </div>
                   <p style={{ fontSize: '0.95rem', color: 'var(--text-heading)', lineHeight: 1.6, fontWeight: 500 }}>
-                    {line.replace(/^[•\-*\d.\s]+/, '').trim()}
+                    {line.replace(/^[•\-*\d.\s]+/, '').replace(/\*\*/g, '').trim()}
                   </p>
                 </div>
               ))}
