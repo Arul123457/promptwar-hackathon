@@ -142,7 +142,6 @@ app.post('/api/crisis', async (req, res) => {
     const userId = req.body.userId || 'demo_user_123';
     const text = sanitizeInput(req.body.text);
 
-    // Fetch live user profile context from Supabase
     const profile = await dbService.getProfile(userId);
 
     const systemPrompt = `You are Altruist AI — a compassionate, unselfish crisis intervention assistant.
@@ -166,7 +165,6 @@ Emergency Status: Reassurance active — your safety anchor contact is available
 
     const aiText = await generateGroqCompletion(systemPrompt, userPrompt, fallbackResponse);
 
-    // Log crisis event to Supabase postgres
     const eventLog = await dbService.logCrisisEvent({
       user_id: userId,
       transcript: text || 'One-Tap Panic Activation',
@@ -208,7 +206,7 @@ app.post('/api/caregiver/invite', async (req, res) => {
   res.json({ success: true, invite });
 });
 
-// 7. Caregiver AI Coaching Tip (Contextual query based on Supabase event trends)
+// 7. Caregiver AI Coaching Tip
 app.post('/api/caregiver-tip', async (req, res) => {
   const userId = req.body.userId || 'demo_user_123';
   const query = sanitizeInput(req.body.query);
@@ -267,12 +265,14 @@ app.post('/api/learn/query', async (req, res) => {
 
 app.use((req, res) => res.status(404).json({ error: 'Endpoint not found' }));
 
-app.listen(PORT, () => {
-  console.log(`====================================================`);
-  console.log(`Altruist AI Express Server listening on port ${PORT}`);
-  console.log(`Groq LLM Status: ${isGroqConfigured ? 'CONNECTED' : 'FALLBACK MODE'}`);
-  console.log(`Supabase Status: ${isSupabaseConfigured ? 'CONNECTED' : 'LIVE MEMORY MODE'}`);
-  console.log(`====================================================`);
-});
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log(`====================================================`);
+    console.log(`Altruist AI Express Server listening on port ${PORT}`);
+    console.log(`Groq LLM Status: ${isGroqConfigured ? 'CONNECTED' : 'FALLBACK MODE'}`);
+    console.log(`Supabase Status: ${isSupabaseConfigured ? 'CONNECTED' : 'LIVE MEMORY MODE'}`);
+    console.log(`====================================================`);
+  });
+}
 
 export default app;
