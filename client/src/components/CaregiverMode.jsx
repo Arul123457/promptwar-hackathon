@@ -284,17 +284,56 @@ export default function CaregiverMode({ incidentLog, user }) {
           </button>
         </div>
 
-        {aiAdvice && (
+        {/* AI Loading State */}
+        {isLoading && (
           <div style={{
-            padding: '20px',
-            borderRadius: '14px',
-            background: 'var(--bg-secondary)',
-            borderLeft: '4px solid var(--primary-blue)',
-            lineHeight: '1.7',
-            whiteSpace: 'pre-line',
-            color: 'var(--text-main)'
+            padding: '24px', borderRadius: '14px',
+            background: 'rgba(59, 130, 246, 0.04)',
+            border: '1px solid rgba(59, 130, 246, 0.2)',
+            textAlign: 'center'
           }}>
-            {aiAdvice}
+            <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>⏳</div>
+            <p style={{ color: 'var(--primary-blue)', fontWeight: 700, fontSize: '0.95rem' }}>
+              Generating guidance based on your patient's recovery history...
+            </p>
+          </div>
+        )}
+
+        {/* AI Advice Output — Structured Display */}
+        {aiAdvice && !isLoading && (
+          <div style={{ borderRadius: '14px', border: '1px solid rgba(30, 58, 138, 0.2)', overflow: 'hidden' }}>
+            {/* Header */}
+            <div style={{
+              padding: '14px 20px',
+              background: 'var(--primary-blue)',
+              display: 'flex', alignItems: 'center', gap: '10px'
+            }}>
+              <Sparkles size={18} color="#ffffff" />
+              <div>
+                <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#ffffff' }}>AI Care Guidance</div>
+                <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.7)' }}>Generated from patient recovery data</div>
+              </div>
+            </div>
+            {/* Content */}
+            <div style={{ padding: '20px 24px', background: '#ffffff' }}>
+              {aiAdvice.split('\n').filter(l => l.trim()).map((line, i) => (
+                <div key={i} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', marginBottom: '12px' }}>
+                  <div style={{
+                    flexShrink: 0,
+                    width: '24px', height: '24px', borderRadius: '50%',
+                    background: 'rgba(30, 58, 138, 0.12)',
+                    color: 'var(--primary-blue)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '0.75rem', fontWeight: 800, marginTop: '2px'
+                  }}>
+                    {i + 1}
+                  </div>
+                  <p style={{ fontSize: '0.95rem', color: 'var(--text-heading)', lineHeight: 1.6, fontWeight: 500 }}>
+                    {line.replace(/^[•\-*\d.\s]+/, '').trim()}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

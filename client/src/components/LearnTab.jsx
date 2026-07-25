@@ -173,17 +173,43 @@ export default function LearnTab() {
           </button>
         </div>
 
-        {aiAnswer && (
+        {/* AI Loading State */}
+        {isLoading && (
           <div style={{
-            padding: '20px',
-            borderRadius: '14px',
-            background: 'var(--bg-secondary)',
-            borderLeft: '4px solid var(--primary-blue)',
-            lineHeight: '1.7',
-            whiteSpace: 'pre-line',
-            color: 'var(--text-main)'
+            padding: '20px', borderRadius: '14px', textAlign: 'center',
+            background: 'rgba(59, 130, 246, 0.04)',
+            border: '1px solid rgba(59, 130, 246, 0.15)'
           }}>
-            {aiAnswer}
+            <div style={{ fontSize: '1.4rem', marginBottom: '8px' }}>⏳</div>
+            <p style={{ color: 'var(--primary-blue)', fontWeight: 700 }}>Generating your recovery guidance...</p>
+          </div>
+        )}
+
+        {/* AI Answer — Structured Output */}
+        {aiAnswer && !isLoading && (
+          <div style={{ borderRadius: '12px', border: '1px solid rgba(30, 58, 138, 0.2)', overflow: 'hidden' }}>
+            <div style={{
+              padding: '12px 18px', background: 'var(--primary-blue)',
+              display: 'flex', alignItems: 'center', gap: '8px'
+            }}>
+              <Sparkles size={16} color="#ffffff" />
+              <div style={{ fontSize: '0.88rem', fontWeight: 800, color: '#ffffff' }}>AI Recovery Assistant Response</div>
+            </div>
+            <div style={{ padding: '18px 20px', background: '#ffffff' }}>
+              {aiAnswer.split('\n').filter(l => l.trim()).map((line, i) => (
+                <div key={i} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', marginBottom: '10px' }}>
+                  <div style={{
+                    flexShrink: 0, width: '22px', height: '22px', borderRadius: '50%',
+                    background: 'rgba(30, 58, 138, 0.1)', color: 'var(--primary-blue)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '0.72rem', fontWeight: 800, marginTop: '2px'
+                  }}>{i + 1}</div>
+                  <p style={{ fontSize: '0.95rem', color: 'var(--text-heading)', lineHeight: 1.65, fontWeight: 500 }}>
+                    {line.replace(/^[•\-*\d.\s]+/, '').trim()}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
