@@ -2,38 +2,33 @@ import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import LandingPage from './components/LandingPage';
 import Onboarding from './components/Onboarding';
+import AuthModal from './components/AuthModal';
 import DailyPulseModal from './components/DailyPulseModal';
 import CrisisMode from './components/CrisisMode';
 import CaregiverMode from './components/CaregiverMode';
 import LearnTab from './components/LearnTab';
 import { apiService } from './services/apiService';
-import { ShieldCheck, Heart } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('landing');
-  const [theme, setTheme] = useState('dark');
   const [serverStatus, setServerStatus] = useState(null);
   const [user, setUser] = useState(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [showPulseModal, setShowPulseModal] = useState(false);
   const [incidentLog, setIncidentLog] = useState([]);
 
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
+    // Pure light theme enforcement
+    document.documentElement.setAttribute('data-theme', 'light');
 
-    apiService.checkHealth().then((status) => {
-      setServerStatus(status);
-    });
-
+    apiService.checkHealth().then((status) => setServerStatus(status));
     const interval = setInterval(() => {
       apiService.checkHealth().then((status) => setServerStatus(status));
     }, 15000);
 
     return () => clearInterval(interval);
-  }, [theme]);
-
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
-  };
+  }, []);
 
   const handleDemoLogin = async () => {
     try {
@@ -44,9 +39,14 @@ export default function App() {
       }
     } catch (err) {
       console.warn('Demo login issue:', err);
-      setUser({ id: 'demo_user_123', email: 'demo@altruist.ai' });
+      setUser({ id: 'demo_user_123', email: 'demo@altruist.ai', role: 'Evaluator Demo User' });
       setActiveTab('crisis');
     }
+  };
+
+  const handleAuthSuccess = (authenticatedUser) => {
+    setUser(authenticatedUser);
+    setActiveTab('crisis');
   };
 
   const handleLogIncident = (incident) => {
@@ -54,14 +54,13 @@ export default function App() {
   };
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-page)' }}>
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        theme={theme}
-        toggleTheme={toggleTheme}
         serverStatus={serverStatus}
         onOpenPulse={() => setShowPulseModal(true)}
+        onOpenAuth={() => setShowAuthModal(true)}
         onDemoLogin={handleDemoLogin}
         user={user}
       />
@@ -70,12 +69,19 @@ export default function App() {
         {activeTab === 'landing' && (
           <LandingPage
             onLaunchDemo={handleDemoLogin}
-            onNavigateTab={(tab) => setActiveTab(tab)}
+            onNavigateTab={(tab) => {
+              if (tab === 'onboarding') setActiveTab('onboarding');
+              else if (tab === 'crisis') setActiveTab('crisis');
+              else setActiveTab(tab);
+            }}
           />
         )}
         {activeTab === 'onboarding' && (
           <Onboarding
-            onComplete={() => setActiveTab('crisis')}
+            onComplete={() => {
+              if (!user) setShowAuthModal(true);
+              else setActiveTab('crisis');
+            }}
           />
         )}
         {activeTab === 'crisis' && (
@@ -94,6 +100,13 @@ export default function App() {
         )}
       </main>
 
+      {/* Auth Modal (Login / Register & Demo Credentials) */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onAuthSuccess={handleAuthSuccess}
+      />
+
       {/* Daily Emotional Pulse Modal */}
       <DailyPulseModal
         isOpen={showPulseModal}
@@ -102,8 +115,8 @@ export default function App() {
 
       {/* Footer */}
       <footer style={{
-        borderTop: '1px solid var(--border-glass)',
-        background: 'rgba(15, 23, 42, 0.9)',
+        borderTop: '1px solid var(--border)',
+        background: '#ffffff',
         padding: '24px 0',
         marginTop: 'auto'
       }}>
@@ -114,7 +127,7 @@ export default function App() {
           justifyContent: 'space-between',
           gap: '16px',
           fontSize: '0.85rem',
-          color: 'var(--text-muted)'
+          color: 'var(--text-body)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <ShieldCheck size={18} color="var(--primary-blue)" />

@@ -1,21 +1,21 @@
 import React from 'react';
-import { Shield, Radio, HeartHandshake, BookOpen, Sun, Moon, Home, Activity, Key } from 'lucide-react';
+import { Shield, Radio, HeartHandshake, BookOpen, Home, Activity, Key, LogIn, UserCheck } from 'lucide-react';
 
-export default function Navbar({ activeTab, setActiveTab, theme, toggleTheme, serverStatus, onOpenPulse, onDemoLogin, user }) {
+export default function Navbar({ activeTab, setActiveTab, serverStatus, onOpenPulse, onOpenAuth, onDemoLogin, user }) {
   return (
     <header style={{
-      borderBottom: '1px solid var(--border-glass)',
-      background: 'rgba(15, 23, 42, 0.85)',
-      backdropFilter: 'blur(16px)',
+      borderBottom: '1px solid var(--border)',
+      background: '#ffffff',
       position: 'sticky',
       top: 0,
-      zIndex: 50
+      zIndex: 50,
+      boxShadow: '0 2px 10px rgba(0,0,0,0.03)'
     }}>
       <div className="container" style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        height: '76px'
+        height: '74px'
       }}>
         {/* Brand Logo & Name */}
         <div
@@ -26,11 +26,11 @@ export default function Navbar({ activeTab, setActiveTab, theme, toggleTheme, se
             width: '42px',
             height: '42px',
             borderRadius: '12px',
-            background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+            background: 'var(--gradient-primary)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 4px 16px rgba(37, 99, 235, 0.4)'
+            boxShadow: '0 4px 16px rgba(37, 99, 235, 0.3)'
           }}>
             <Shield size={22} color="#ffffff" />
           </div>
@@ -39,14 +39,12 @@ export default function Navbar({ activeTab, setActiveTab, theme, toggleTheme, se
               fontFamily: 'var(--font-heading)',
               fontSize: '1.3rem',
               fontWeight: 800,
-              background: 'linear-gradient(90deg, #ffffff 0%, #cbd5e1 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
+              color: 'var(--primary-blue)',
               letterSpacing: '-0.02em'
             }}>
               Altruist AI
             </h1>
-            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-body)', display: 'flex', alignItems: 'center', gap: '5px' }}>
               <span style={{
                 width: '6px',
                 height: '6px',
@@ -62,10 +60,10 @@ export default function Navbar({ activeTab, setActiveTab, theme, toggleTheme, se
         {/* Mode Navigation Tabs */}
         <nav style={{
           display: 'flex',
-          background: 'var(--bg-secondary)',
+          background: 'var(--bg-page)',
           padding: '4px',
           borderRadius: '14px',
-          border: '1px solid var(--border-glass)'
+          border: '1px solid var(--border)'
         }}>
           <button
             id="tab-landing-mode"
@@ -82,7 +80,7 @@ export default function Navbar({ activeTab, setActiveTab, theme, toggleTheme, se
               fontSize: '0.85rem',
               transition: 'all 0.2s ease',
               background: activeTab === 'landing' ? 'var(--primary-blue)' : 'transparent',
-              color: activeTab === 'landing' ? '#ffffff' : 'var(--text-muted)'
+              color: activeTab === 'landing' ? '#ffffff' : 'var(--text-body)'
             }}
           >
             <Home size={16} /> Home
@@ -102,8 +100,8 @@ export default function Navbar({ activeTab, setActiveTab, theme, toggleTheme, se
               fontWeight: 600,
               fontSize: '0.85rem',
               transition: 'all 0.2s ease',
-              background: activeTab === 'crisis' ? '#ef4444' : 'transparent',
-              color: activeTab === 'crisis' ? '#ffffff' : 'var(--text-muted)'
+              background: activeTab === 'crisis' ? 'var(--accent-red)' : 'transparent',
+              color: activeTab === 'crisis' ? '#ffffff' : 'var(--text-body)'
             }}
           >
             <Radio size={16} /> Crisis
@@ -123,8 +121,8 @@ export default function Navbar({ activeTab, setActiveTab, theme, toggleTheme, se
               fontWeight: 600,
               fontSize: '0.85rem',
               transition: 'all 0.2s ease',
-              background: activeTab === 'caregiver' ? '#3b82f6' : 'transparent',
-              color: activeTab === 'caregiver' ? '#ffffff' : 'var(--text-muted)'
+              background: activeTab === 'caregiver' ? 'var(--secondary-blue)' : 'transparent',
+              color: activeTab === 'caregiver' ? '#ffffff' : 'var(--text-body)'
             }}
           >
             <HeartHandshake size={16} /> Caregiver
@@ -144,8 +142,8 @@ export default function Navbar({ activeTab, setActiveTab, theme, toggleTheme, se
               fontWeight: 600,
               fontSize: '0.85rem',
               transition: 'all 0.2s ease',
-              background: activeTab === 'learn' ? '#a855f7' : 'transparent',
-              color: activeTab === 'learn' ? '#ffffff' : 'var(--text-muted)'
+              background: activeTab === 'learn' ? 'var(--hover-blue)' : 'transparent',
+              color: activeTab === 'learn' ? '#ffffff' : 'var(--text-body)'
             }}
           >
             <BookOpen size={16} /> Learn
@@ -162,9 +160,9 @@ export default function Navbar({ activeTab, setActiveTab, theme, toggleTheme, se
               gap: '6px',
               padding: '8px 12px',
               borderRadius: '10px',
-              border: '1px solid var(--border-glass)',
-              background: 'rgba(37, 99, 235, 0.15)',
-              color: '#60a5fa',
+              border: '1px solid var(--border)',
+              background: 'rgba(59, 130, 246, 0.1)',
+              color: 'var(--primary-blue)',
               fontSize: '0.82rem',
               fontWeight: 700,
               cursor: 'pointer'
@@ -173,43 +171,60 @@ export default function Navbar({ activeTab, setActiveTab, theme, toggleTheme, se
             <Activity size={16} /> Daily Pulse
           </button>
 
+          {user ? (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '8px 12px',
+              borderRadius: '10px',
+              background: 'rgba(16, 185, 129, 0.12)',
+              border: '1px solid #10b981',
+              color: '#059669',
+              fontSize: '0.82rem',
+              fontWeight: 700
+            }}>
+              <UserCheck size={16} /> {user.email?.split('@')[0] || 'User'}
+            </div>
+          ) : (
+            <button
+              onClick={onOpenAuth}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 14px',
+                borderRadius: '10px',
+                border: 'none',
+                background: 'var(--primary-blue)',
+                color: '#ffffff',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
+            >
+              <LogIn size={15} /> Sign In / Register
+            </button>
+          )}
+
           <button
             onClick={onDemoLogin}
-            title="Log in as Evaluator Demo User"
+            title="1-Click Evaluator Demo Access"
             style={{
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
               padding: '8px 12px',
               borderRadius: '10px',
-              border: '1px solid var(--border-glass-bright)',
-              background: user ? 'rgba(16, 185, 129, 0.2)' : 'var(--bg-secondary)',
-              color: user ? '#10b981' : 'var(--accent-amber)',
+              border: '1px dashed var(--secondary-blue)',
+              background: 'var(--bg-page)',
+              color: 'var(--primary-blue)',
               fontSize: '0.82rem',
               fontWeight: 700,
               cursor: 'pointer'
             }}
           >
-            <Key size={14} /> {user ? 'Demo Active' : 'Evaluator Demo'}
-          </button>
-
-          <button
-            onClick={toggleTheme}
-            aria-label="Toggle Dark Light Theme"
-            style={{
-              width: '38px',
-              height: '38px',
-              borderRadius: '10px',
-              border: '1px solid var(--border-glass)',
-              background: 'var(--bg-secondary)',
-              color: 'var(--text-main)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer'
-            }}
-          >
-            {theme === 'dark' ? <Sun size={18} color="#f59e0b" /> : <Moon size={18} color="#8b5cf6" />}
+            <Key size={14} /> Demo Access
           </button>
         </div>
       </div>

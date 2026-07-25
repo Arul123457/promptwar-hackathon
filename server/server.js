@@ -13,10 +13,7 @@ const PORT = process.env.PORT || 5000;
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
 
-// ----------------------------------------------------
 // Security Controls
-// ----------------------------------------------------
-
 app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginResourcePolicy: { policy: 'cross-origin' }
@@ -91,7 +88,7 @@ function sanitizeInput(str, maxLen = 1000) {
 // Altruist AI Backend Endpoints
 // ----------------------------------------------------
 
-// 1. Health & Config Status
+// 1. Health Status
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
@@ -103,7 +100,29 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// 2. Evaluator Demo Auth Quick Login
+// 2. Supabase Auth Register
+app.post('/api/auth/register', async (req, res) => {
+  const email = sanitizeInput(req.body.email, 100);
+  const password = sanitizeInput(req.body.password, 100);
+
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required.' });
+  }
+
+  const result = await dbService.registerUser(email, password);
+  res.json(result);
+});
+
+// 3. Supabase Auth Login
+app.post('/api/auth/login', async (req, res) => {
+  const email = sanitizeInput(req.body.email, 100);
+  const password = sanitizeInput(req.body.password, 100);
+
+  const result = await dbService.loginUser(email, password);
+  res.json(result);
+});
+
+// 4. Evaluator Demo Auth Quick Login
 app.post('/api/auth/demo-login', async (req, res) => {
   const demoUserId = 'demo_user_123';
   const profile = await dbService.getProfile(demoUserId);
@@ -118,7 +137,7 @@ app.post('/api/auth/demo-login', async (req, res) => {
   });
 });
 
-// 3. Voice Onboarding Profile Save
+// 5. Voice Onboarding Profile Save
 app.post('/api/onboarding', async (req, res) => {
   const { userId, triggers, copingStrategies, personaTone, emergencyContact } = req.body;
   const targetId = userId || 'demo_user_123';
@@ -136,7 +155,7 @@ app.post('/api/onboarding', async (req, res) => {
   res.json({ success: true, profile: savedProfile });
 });
 
-// 4. Crisis Mode Endpoint (Reads Supabase context, calls Groq, logs event)
+// 6. Crisis Mode Endpoint
 app.post('/api/crisis', async (req, res) => {
   try {
     const userId = req.body.userId || 'demo_user_123';
@@ -184,7 +203,7 @@ Emergency Status: Reassurance active — your safety anchor contact is available
   }
 });
 
-// 5. Daily Pulse Check-In Endpoint
+// 7. Daily Pulse Check-In
 app.post('/api/pulse', async (req, res) => {
   const userId = req.body.userId || 'demo_user_123';
   const score = parseInt(req.body.score, 10) || 3;
@@ -199,14 +218,14 @@ app.post('/api/pulse', async (req, res) => {
   res.json({ success: true, pulse: pulseEntry });
 });
 
-// 6. Caregiver Invite Code Generation
+// 8. Caregiver Invite Code Generation
 app.post('/api/caregiver/invite', async (req, res) => {
   const userId = req.body.userId || 'demo_user_123';
   const invite = await dbService.createCaregiverInvite(userId);
   res.json({ success: true, invite });
 });
 
-// 7. Caregiver AI Coaching Tip
+// 9. Caregiver AI Coaching Tip
 app.post('/api/caregiver-tip', async (req, res) => {
   const userId = req.body.userId || 'demo_user_123';
   const query = sanitizeInput(req.body.query);
@@ -237,7 +256,7 @@ Provide practical, empathetic caregiver de-escalation tips in 3 bullet points.`;
   res.json({ success: true, guidance: tipText });
 });
 
-// 8. Caregiver Live Patient Trends Query
+// 10. Caregiver Patient Trends Query
 app.get('/api/caregiver/patient-trends', async (req, res) => {
   const userId = req.query.userId || 'demo_user_123';
   const crisisEvents = await dbService.getCrisisEvents(userId);
@@ -253,7 +272,7 @@ app.get('/api/caregiver/patient-trends', async (req, res) => {
   });
 });
 
-// 9. Learn Hub Educational Q&A
+// 11. Learn Hub Educational Q&A
 app.post('/api/learn/query', async (req, res) => {
   const query = sanitizeInput(req.body.query);
   const systemPrompt = `You are Altruist AI Educational Guide. Provide clear, uplifting, evidence-based coping advice for mental health and caregiving queries in bullet points.`;

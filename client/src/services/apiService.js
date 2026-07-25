@@ -50,6 +50,14 @@ export const apiService = {
     }
   },
 
+  async registerUser(email, password) {
+    return await postJSON('/api/auth/register', { email, password });
+  },
+
+  async loginUser(email, password) {
+    return await postJSON('/api/auth/login', { email, password });
+  },
+
   async demoLogin() {
     return await postJSON('/api/auth/demo-login', {});
   },
