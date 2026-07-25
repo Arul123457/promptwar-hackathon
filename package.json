@@ -1,0 +1,16 @@
+{
+  "name": "crisis-care-app",
+  "version": "1.0.0",
+  "description": "Full-stack Crisis Intervention & Caregiver App with Web Speech API and Express Groq LLM Backend",
+  "private": true,
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "start": "node server/server.js",
+    "server": "npm run dev --prefix server",
+    "client": "npm run dev --prefix client",
+    "build": "npm run build --prefix client"
+  }
+}
