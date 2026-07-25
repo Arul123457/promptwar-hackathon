@@ -1,7 +1,7 @@
 import React from 'react';
-import { Shield, Radio, HeartHandshake, BookOpen, Home, Activity, Key, LogIn, UserCheck } from 'lucide-react';
+import { Shield, Radio, HeartHandshake, BookOpen, Home, Activity, Key, LogIn, UserCheck, LogOut } from 'lucide-react';
 
-export default function Navbar({ activeTab, setActiveTab, serverStatus, onOpenPulse, onOpenAuth, onDemoLogin, user }) {
+export default function Navbar({ activeTab, setActiveTab, serverStatus, onOpenPulse, onOpenAuth, onDemoLogin, onLogout, user }) {
   return (
     <header style={{
       borderBottom: '1px solid var(--border)',
@@ -178,20 +178,42 @@ export default function Navbar({ activeTab, setActiveTab, serverStatus, onOpenPu
           )}
 
           {user ? (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '8px 12px',
-              borderRadius: '10px',
-              background: 'rgba(16, 185, 129, 0.12)',
-              border: '1px solid #10b981',
-              color: '#059669',
-              fontSize: '0.82rem',
-              fontWeight: 700
-            }}>
-              <UserCheck size={16} /> {user.email?.split('@')[0] || 'Member'}
-            </div>
+            <>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 12px',
+                borderRadius: '10px',
+                background: 'rgba(16, 185, 129, 0.12)',
+                border: '1px solid #10b981',
+                color: '#059669',
+                fontSize: '0.82rem',
+                fontWeight: 700
+              }}>
+                <UserCheck size={16} /> {user.email?.split('@')[0] || 'Member'}
+              </div>
+
+              <button
+                onClick={onLogout}
+                title="Sign Out of Session"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '8px 12px',
+                  borderRadius: '10px',
+                  border: '1px solid var(--border)',
+                  background: '#ffffff',
+                  color: 'var(--accent-red)',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                <LogOut size={15} /> Sign Out
+              </button>
+            </>
           ) : (
             <button
               onClick={onOpenAuth}
