@@ -92,7 +92,7 @@ export default function CaregiverMode({ incidentLog, user }) {
               Altruist AI Caregiver Dashboard
             </h2>
             <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)' }}>
-              Monitor live patient trends, generate caregiver invite links, and receive Groq AI de-escalation tips.
+              Monitor live recovery activity, generate secure caregiver access links, and receive AI-powered de-escalation guidance personalized to your patient's relapse risk profile.
             </p>
           </div>
         </div>
@@ -110,7 +110,7 @@ export default function CaregiverMode({ incidentLog, user }) {
           </div>
 
           <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
-            Link a family member or nurse to share real-time crisis alerts and daily pulse check trends.
+            Link a family member or nurse to share real-time recovery updates and support coordination.
           </p>
 
           {inviteCode ? (
@@ -167,11 +167,11 @@ export default function CaregiverMode({ incidentLog, user }) {
           )}
         </div>
 
-        {/* Live Patient Status & Supabase Trends */}
+        {/* Live Patient Status & Trends */}
         <div className="glass-panel" style={{ padding: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--text-main)' }}>
-              Live Patient State (Supabase)
+              Live Patient Status
             </h3>
             <span style={{
               padding: '4px 12px',
@@ -189,7 +189,7 @@ export default function CaregiverMode({ incidentLog, user }) {
             <div>
               <span style={{ color: 'var(--text-muted)' }}>Registered Profile Triggers:</span>
               <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>
-                {liveTrends?.profile?.triggers || 'Sudden loud noise, crowded spaces'}
+                {liveTrends?.profile?.triggers || 'Sudden stressors, high-risk environments'}
               </div>
             </div>
             <div>
@@ -202,26 +202,26 @@ export default function CaregiverMode({ incidentLog, user }) {
         </div>
       </div>
 
-      {/* Groq AI Caregiver Advisor */}
+      {/* AI Care Advisor */}
       <div className="glass-panel" style={{ padding: '28px', marginBottom: '32px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
           <Sparkles size={24} color="var(--primary-blue)" />
           <h3 style={{ fontSize: '1.25rem', fontWeight: 700, fontFamily: 'var(--font-heading)' }}>
-            Ask Groq AI Caregiver Advisor
+            Ask AI Care Advisor
           </h3>
         </div>
 
         <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
-          Get immediate clinical de-escalation tips tailored to your patient's recent Supabase event history.
+          Get immediate, AI-generated de-escalation guidance tailored to your patient's recent recovery activity and relapse risk patterns.
         </p>
 
         {/* Preset Prompt Chips */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
           {[
-            'De-escalate sudden sensory overload',
-            'Managing evening anxiety & restlessness',
-            'Preventing caregiver burnout',
-            'Calming panic during public outings'
+            'My patient is showing withdrawal agitation',
+            'Cravings are escalating rapidly',
+            'Relapse risk is very high right now',
+            'How to do a compassionate intervention?'
           ].map((chip, idx) => (
             <button
               key={idx}
@@ -302,7 +302,7 @@ export default function CaregiverMode({ incidentLog, user }) {
       {/* Incident Log Table */}
       <div className="glass-panel" style={{ padding: '24px' }}>
         <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '16px', color: 'var(--text-main)' }}>
-          Real Incident & Crisis Log (Supabase Stream)
+          Real-Time Incident & Recovery Log
         </h3>
         {liveTrends?.recentCrises && liveTrends.recentCrises.length > 0 ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>

@@ -52,12 +52,12 @@ export default function Navbar({ activeTab, setActiveTab, serverStatus, onOpenPu
                 backgroundColor: serverStatus?.status === 'ok' ? '#10b981' : '#f59e0b',
                 display: 'inline-block'
               }} />
-              {serverStatus?.status === 'ok' ? 'Live Groq & Supabase' : 'Offline Driver'}
+              {serverStatus?.status === 'ok' ? 'AI System Online' : 'Connecting...'}
             </span>
           </div>
         </div>
 
-        {/* Mode Navigation Tabs - Protected App Tabs Only Visible When Authenticated */}
+        {/* Navigation Tabs — Protected App Tabs only visible after login */}
         <nav style={{
           display: 'flex',
           background: 'var(--bg-page)',
@@ -86,7 +86,6 @@ export default function Navbar({ activeTab, setActiveTab, serverStatus, onOpenPu
             <Home size={16} /> Home
           </button>
 
-          {/* Protected Navigation Tabs - Gated by User Authentication */}
           {user && (
             <>
               <button
@@ -107,7 +106,7 @@ export default function Navbar({ activeTab, setActiveTab, serverStatus, onOpenPu
                   color: activeTab === 'crisis' ? '#ffffff' : 'var(--text-body)'
                 }}
               >
-                <Radio size={16} /> Crisis Mode
+                <Radio size={16} /> Crisis Support
               </button>
 
               <button
@@ -128,7 +127,7 @@ export default function Navbar({ activeTab, setActiveTab, serverStatus, onOpenPu
                   color: activeTab === 'caregiver' ? '#ffffff' : 'var(--text-body)'
                 }}
               >
-                <HeartHandshake size={16} /> Caregiver Mode
+                <HeartHandshake size={16} /> Caregiver
               </button>
 
               <button
@@ -149,7 +148,7 @@ export default function Navbar({ activeTab, setActiveTab, serverStatus, onOpenPu
                   color: activeTab === 'learn' ? '#ffffff' : 'var(--text-body)'
                 }}
               >
-                <BookOpen size={16} /> Learn Hub
+                <BookOpen size={16} /> Recovery Hub
               </button>
             </>
           )}
@@ -174,7 +173,7 @@ export default function Navbar({ activeTab, setActiveTab, serverStatus, onOpenPu
                 cursor: 'pointer'
               }}
             >
-              <Activity size={16} /> Daily Pulse
+              <Activity size={16} /> Daily Check-In
             </button>
           )}
 
@@ -191,7 +190,7 @@ export default function Navbar({ activeTab, setActiveTab, serverStatus, onOpenPu
               fontSize: '0.82rem',
               fontWeight: 700
             }}>
-              <UserCheck size={16} /> {user.email?.split('@')[0] || 'Authenticated User'}
+              <UserCheck size={16} /> {user.email?.split('@')[0] || 'Member'}
             </div>
           ) : (
             <button

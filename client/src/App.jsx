@@ -110,14 +110,12 @@ export default function App() {
         )}
       </main>
 
-      {/* Auth Modal (Login / Register & Demo Credentials) */}
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
         onAuthSuccess={handleAuthSuccess}
       />
 
-      {/* Daily Emotional Pulse Modal */}
       <DailyPulseModal
         isOpen={showPulseModal}
         onClose={() => setShowPulseModal(false)}
@@ -142,12 +140,12 @@ export default function App() {
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <ShieldCheck size={18} color="var(--primary-blue)" />
-            <span><strong>Altruist AI</strong> • Powered by Groq LLM & Supabase PostgreSQL</span>
+            <span><strong>Altruist AI</strong> — AI-Powered Substance Use Recovery & Caregiver Support Platform</span>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-            <span>📞 988 Suicide & Crisis Lifeline</span>
-            <span>📱 Text HOME to 741741</span>
+            <span>📞 SAMHSA Helpline: 1-800-662-4357</span>
+            <span>📱 988 Crisis Lifeline</span>
           </div>
         </div>
       </footer>

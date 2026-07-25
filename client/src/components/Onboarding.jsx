@@ -80,7 +80,7 @@ export default function Onboarding({ onComplete, user }) {
             fontWeight: 700,
             marginBottom: '12px'
           }}>
-            <Sparkles size={14} /> Voice-First Profile Setup
+            <Sparkles size={14} /> Voice-First Recovery Profile Setup
           </div>
           <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '8px' }}>
             Welcome to Altruist AI
@@ -140,18 +140,18 @@ export default function Onboarding({ onComplete, user }) {
         {/* Step 1: Stress Triggers */}
         {step === 1 && (
           <div>
-            <label style={{ display: 'block', fontSize: '1rem', fontWeight: 700, marginBottom: '8px', color: 'var(--text-main)' }}>
-              1. What triggers your panic or high stress?
-            </label>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
-              Speak naturally or type your triggers below.
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '12px', color: 'var(--text-heading)' }}>
+              Step 1 of 3: What are your relapse triggers?
+            </h3>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '20px' }}>
+              Tell us what situations, emotions, people, or places trigger cravings or relapse risk for you. Speak naturally or type below.
             </p>
 
             <div style={{ position: 'relative', marginBottom: '24px' }}>
               <textarea
                 value={formData.triggers}
                 onChange={(e) => setFormData({ ...formData, triggers: e.target.value })}
-                placeholder="e.g. Crowded spaces, sudden loud noises, feeling trapped..."
+                placeholder="e.g., Social gatherings with alcohol, certain people from my past, stress at work, being alone late at night..."
                 rows={4}
                 style={{
                   width: '100%',
@@ -215,18 +215,18 @@ export default function Onboarding({ onComplete, user }) {
         {/* Step 2: Coping Strategies */}
         {step === 2 && (
           <div>
-            <label style={{ display: 'block', fontSize: '1rem', fontWeight: 700, marginBottom: '8px', color: 'var(--text-main)' }}>
-              2. What coping techniques work best for you?
-            </label>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
-              e.g. 5-4-3-2-1 sensory grounding, box breathing, slow music.
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '12px', color: 'var(--text-heading)' }}>
+              Step 2 of 3: What recovery strategies help you?
+            </h3>
+            <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '20px' }}>
+              What coping tools do you use when cravings hit? (e.g., calling sponsor, attending meetings, breathing exercises)
             </p>
 
             <div style={{ position: 'relative', marginBottom: '24px' }}>
               <textarea
                 value={formData.copingStrategies}
                 onChange={(e) => setFormData({ ...formData, copingStrategies: e.target.value })}
-                placeholder="e.g. 4-4-4 Box Breathing, holding an ice cube, listening to soft rain..."
+                placeholder="e.g., Calling my sponsor, attending NA meetings, cold water on face, 5-4-3-2-1 grounding, prayer..."
                 rows={4}
                 style={{
                   width: '100%',

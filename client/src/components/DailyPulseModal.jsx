@@ -88,7 +88,7 @@ export default function DailyPulseModal({ isOpen, onClose, user }) {
         </div>
 
         <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', marginBottom: '24px' }}>
-          How calm or anxious are you feeling right now? Select a score from 1 to 5.
+          How is your craving level or emotional stability right now? Rate from 1 (very difficult) to 5 (strong and stable).
         </p>
 
         {/* 1-5 Rating Selector */}
@@ -156,7 +156,7 @@ export default function DailyPulseModal({ isOpen, onClose, user }) {
 
         {savedSuccess ? (
           <div style={{ padding: '12px', textAlign: 'center', background: 'rgba(16, 185, 129, 0.2)', color: '#10b981', borderRadius: '10px', fontWeight: 700 }}>
-            ✓ Pulse check saved to Supabase!
+            ✓ Daily check-in saved!
           </div>
         ) : (
           <button

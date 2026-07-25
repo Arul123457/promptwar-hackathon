@@ -128,7 +128,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
             Altruist AI Authentication
           </h3>
           <p style={{ fontSize: '0.88rem', color: 'var(--text-body)', marginTop: '4px' }}>
-            Supabase Auth & Database Source-of-Truth
+            Secure Account Access
           </p>
         </div>
 

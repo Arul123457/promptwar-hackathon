@@ -193,24 +193,27 @@ app.post('/api/crisis', async (req, res) => {
 
     const profile = await dbService.getProfile(userId);
 
-    const systemPrompt = `You are Altruist AI — a compassionate, unselfish crisis intervention assistant.
-Tone: ${profile?.persona_tone || 'Warm, gentle, and reassuring'}.
-Patient known triggers: ${profile?.triggers || 'Anxiety, panic'}.
-Patient preferred coping: ${profile?.coping_strategies || 'Deep breathing, 5-4-3-2-1 grounding'}.
+    const systemPrompt = `You are Altruist AI — a compassionate, specialized crisis intervention assistant for individuals in substance use recovery.
+Tone: ${profile?.persona_tone || 'Warm, grounded, and non-judgmental'}.
+Known relapse triggers for this user: ${profile?.triggers || 'Stress, high-risk environments, social pressure'}.
+Personalized recovery strategies: ${profile?.coping_strategies || 'Calling sponsor, breathing exercises, 5-4-3-2-1 grounding'}.
 
+The user is experiencing a craving surge, relapse risk moment, or acute emotional crisis.
 Provide a single concise response with two clear parts:
-1. Coping Script: 3 short soothing bullet points for immediate grounding.
-2. Emergency Message: 1 sentence reassurance and reminder that emergency contacts are notified if needed.`;
+1. Recovery Script: 3 short, soothing bullet points for immediate craving interruption and grounding — avoid clinical jargon.
+2. Safety Anchor: 1 reassuring sentence reminding them their support network is available and this moment will pass.
+
+IMPORTANT: Never shame or lecture. Speak as a compassionate peer who believes in their recovery.`;
 
     const userPrompt = text
-      ? `The user is in distress and said: "${text}". Provide immediate grounding support.`
-      : `The user tapped the Altruist AI Panic Button. Provide instant calming grounding guidance.`;
+      ? `The user in recovery is experiencing a crisis and said: "${text}". Provide immediate craving interruption and grounding support.`
+      : `The user in recovery has activated the Altruist AI Crisis Button. Provide instant, compassionate grounding guidance for a craving or relapse risk moment.`;
 
-    const fallbackResponse = `• Take a gentle breath in through your nose for 4 seconds... hold... and slowly release.
-• Look around you and notice 3 physical objects to anchor your mind right now.
-• You are safe in this moment, and this surge of anxiety will pass.
+    const fallbackResponse = `• This craving is temporary. Most peak within 20-30 minutes and pass — you are stronger than this moment.
+• Breathe in slowly for 4 seconds... hold... and release for 6 seconds. Your body is safe right now.
+• Name 5 things you can see around you to bring your mind back to the present.
 
-Emergency Status: Reassurance active — your safety anchor contact is available.`;
+Recovery Support: Your sponsor, support group, or emergency contact are available to you right now.`;
 
     const aiText = await generateGroqCompletion(systemPrompt, userPrompt, fallbackResponse);
 
@@ -278,11 +281,23 @@ app.post('/api/caregiver-tip', async (req, res) => {
 
   const recentCrises = await dbService.getCrisisEvents(userId);
   const recentPulses = await dbService.getPulseChecks(userId);
+  const profile = await dbService.getProfile(userId);
+  const avgPulse = recentPulses.length > 0 ? (recentPulses.reduce((acc, p) => acc + p.score, 0) / recentPulses.length).toFixed(1) : 'N/A';
 
-  const systemPrompt = `You are Altruist AI Caregiver Advisor.
-Patient recent crisis count: ${recentCrises.length}.
-Latest pulse check scores: ${recentPulses.map(p => p.score).join(', ') || '3/5'}.
-Provide practical, empathetic caregiver de-escalation tips in 3 bullet points.`;
+  const systemPrompt = `You are Altruist AI — a specialized caregiver advisor for families and support persons of individuals in substance use recovery.
+
+You have access to the patient's recent recovery activity:
+- Crisis activations in the last 7 days: ${recentCrises.length}
+- Average daily stability score (1-5): ${avgPulse}
+- Registered relapse triggers: ${profile?.triggers || 'Not yet set'}
+- Patient-preferred recovery strategies: ${profile?.coping_strategies || 'Not yet set'}
+
+Provide specific, evidence-based, trauma-informed guidance to the caregiver. Focus on:
+1. Practical de-escalation steps they can use RIGHT NOW
+2. How to avoid enabling behaviors while maintaining compassion
+3. When to call for professional intervention (SAMHSA 988 or local crisis services)
+
+Never shame the patient. Empower the caregiver with clear, actionable language. Keep response under 200 words.`;
 
   const userPrompt = query
     ? `Caregiver asks: "${query}"`
@@ -324,7 +339,17 @@ app.get('/api/caregiver/patient-trends', async (req, res) => {
 // 11. Learn Hub Educational Q&A
 app.post('/api/learn/query', async (req, res) => {
   const query = sanitizeInput(req.body.query);
-  const systemPrompt = `You are Altruist AI Educational Guide. Provide clear, uplifting, evidence-based coping advice for mental health and caregiving queries in bullet points.`;
+  const systemPrompt = `You are Altruist AI — an educational AI assistant specialized in substance use disorder recovery, addiction medicine, and caregiver support.
+
+Your role is to provide clear, evidence-based, stigma-free answers that empower individuals in recovery and their families.
+Draw from established frameworks: SMART Recovery, AA/NA 12-step principles, Motivational Interviewing, Harm Reduction, and trauma-informed care.
+
+Always:
+- Use plain language (8th grade reading level)
+- Validate the user's experience without judgment
+- Reference SAMHSA guidelines and evidence-based practices
+- Remind users of crisis resources (988 Lifeline, SAMHSA 1-800-662-4357) when relevant
+- Keep answers practical and actionable (under 200 words)`;
   const fallbackText = `Grounding techniques redirect focus away from racing thoughts and back to the present moment.\n\nKey Strategy - 5-4-3-2-1:\n- 5 things you can SEE\n- 4 things you can TOUCH\n- 3 things you can HEAR\n- 2 things you can SMELL\n- 1 thing you can TASTE`;
 
   const responseText = await generateGroqCompletion(systemPrompt, `Question: "${query}"`, fallbackText);

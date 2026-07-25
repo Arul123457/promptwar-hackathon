@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, Radio, HeartHandshake, Activity, Mic, Cpu, Database, CheckCircle, ArrowRight, Key, Sparkles, UserPlus, LogIn, Lock } from 'lucide-react';
+import { Shield, Radio, HeartHandshake, Activity, Mic, Cpu, Database, ArrowRight, Key, Sparkles, UserPlus } from 'lucide-react';
 
 export default function LandingPage({ onLaunchDemo, onOpenAuth, onNavigateTab, user }) {
   return (
@@ -27,7 +27,7 @@ export default function LandingPage({ onLaunchDemo, onOpenAuth, onNavigateTab, u
           fontWeight: 700,
           marginBottom: '20px'
         }}>
-          <Sparkles size={16} /> Public Marketing Landing Page • No Authentication Required
+          <Sparkles size={16} /> GenAI-Powered Recovery & Prevention Platform
         </div>
 
         <h1 style={{
@@ -49,7 +49,7 @@ export default function LandingPage({ onLaunchDemo, onOpenAuth, onNavigateTab, u
           lineHeight: '1.6',
           fontWeight: 600
         }}>
-          Voice-First Crisis De-Escalation & Caregiver Support Platform
+          Voice-First Substance Use Recovery & Caregiver Support Platform
         </p>
 
         <p style={{
@@ -59,7 +59,8 @@ export default function LandingPage({ onLaunchDemo, onOpenAuth, onNavigateTab, u
           margin: '0 auto 36px',
           lineHeight: '1.6'
         }}>
-          <em>Altruist</em>: One who unselfishly cares for and helps others in times of acute panic, emotional distress, and caregiving strain.
+          Empowering individuals in substance use recovery and their families with zero-typing crisis interventions,
+          personalized emergency scripts, and contextual safety tools — when cognitive load is at its highest.
         </p>
 
         {/* CTA Buttons & Evaluator Test Access Banner */}
@@ -104,7 +105,7 @@ export default function LandingPage({ onLaunchDemo, onOpenAuth, onNavigateTab, u
                 cursor: 'pointer'
               }}
             >
-              <UserPlus size={20} /> Start Voice Onboarding / Register
+              <UserPlus size={20} /> Begin Recovery Onboarding
             </button>
           </div>
 
@@ -122,7 +123,7 @@ export default function LandingPage({ onLaunchDemo, onOpenAuth, onNavigateTab, u
           }}>
             <Key size={18} color="var(--secondary-blue)" />
             <span>
-              <strong>Evaluator Access Credentials:</strong> Email: <code style={{ color: 'var(--primary-blue)', fontWeight: 700 }}>demo@altruist.ai</code> | Password: <code style={{ color: 'var(--primary-blue)', fontWeight: 700 }}>DemoAltruist123!</code>
+              <strong>Demo Access Credentials:</strong> Email: <code style={{ color: 'var(--primary-blue)', fontWeight: 700 }}>demo@altruist.ai</code> | Password: <code style={{ color: 'var(--primary-blue)', fontWeight: 700 }}>DemoAltruist123!</code>
             </span>
           </div>
         </div>
@@ -130,7 +131,7 @@ export default function LandingPage({ onLaunchDemo, onOpenAuth, onNavigateTab, u
 
       {/* Feature Breakdown & Problem Statement Solution Grid */}
       <h2 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '28px', color: 'var(--primary-blue)', textAlign: 'center' }}>
-        How Altruist AI Solves Crisis & Caregiver Challenges
+        How Altruist AI Supports Recovery & Prevents Relapse
       </h2>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '28px', marginBottom: '56px' }}>
@@ -158,15 +159,15 @@ export default function LandingPage({ onLaunchDemo, onOpenAuth, onNavigateTab, u
           </div>
 
           <h3 style={{ fontSize: '1.3rem', fontWeight: 800, marginBottom: '10px', color: 'var(--text-heading)' }}>
-            1. Crisis Grounding Support
+            1. Crisis & Craving Intervention
           </h3>
 
           <p style={{ fontSize: '0.95rem', color: 'var(--text-body)', lineHeight: '1.6', marginBottom: '16px' }}>
-            <strong>Problem Solved:</strong> During sudden panic attacks or sensory overload, individuals cannot navigate complex apps or read dense text.
+            <strong>Problem Solved:</strong> During a craving surge or relapse crisis, individuals cannot navigate complex apps, read text, or think clearly due to peak cognitive load.
           </p>
 
           <div style={{ padding: '12px 16px', borderRadius: '10px', background: 'var(--bg-page)', fontSize: '0.88rem', color: 'var(--primary-blue)', fontWeight: 600 }}>
-            ✓ Solution: One large tap/voice button delivering real-time 5-4-3-2-1 sensory grounding scripts and instant speech synthesis audio readout.
+            ✓ One large voice-activated button delivers a real-time, AI-generated personalized grounding script with automatic audio readout — zero typing required.
           </div>
         </div>
 
@@ -194,15 +195,15 @@ export default function LandingPage({ onLaunchDemo, onOpenAuth, onNavigateTab, u
           </div>
 
           <h3 style={{ fontSize: '1.3rem', fontWeight: 800, marginBottom: '10px', color: 'var(--text-heading)' }}>
-            2. Caregiver Coaching Tools
+            2. Family & Caregiver Support Tools
           </h3>
 
           <p style={{ fontSize: '0.95rem', color: 'var(--text-body)', lineHeight: '1.6', marginBottom: '16px' }}>
-            <strong>Problem Solved:</strong> Caregivers often feel helpless, unequipped with de-escalation strategies, or disconnected from patient incident trends.
+            <strong>Problem Solved:</strong> Families feel helpless, unequipped with de-escalation techniques, and disconnected from their loved one's relapse risk trends.
           </p>
 
           <div style={{ padding: '12px 16px', borderRadius: '10px', background: 'var(--bg-page)', fontSize: '0.88rem', color: 'var(--primary-blue)', fontWeight: 600 }}>
-            ✓ Solution: Generates 6-character caregiver invite links, streams live crisis activity from Supabase, and provides Groq AI clinical de-escalation coaching.
+            ✓ Generates secure caregiver access links, provides live recovery activity monitoring, and delivers AI-guided de-escalation coaching tailored to the patient's history.
           </div>
         </div>
 
@@ -230,22 +231,22 @@ export default function LandingPage({ onLaunchDemo, onOpenAuth, onNavigateTab, u
           </div>
 
           <h3 style={{ fontSize: '1.3rem', fontWeight: 800, marginBottom: '10px', color: 'var(--text-heading)' }}>
-            3. Daily Emotional Pulse Check-Ins
+            3. Daily Recovery Check-Ins
           </h3>
 
           <p style={{ fontSize: '0.95rem', color: 'var(--text-body)', lineHeight: '1.6', marginBottom: '16px' }}>
-            <strong>Problem Solved:</strong> Lack of proactive mood tracking prevents identifying stress patterns before full panic episodes occur.
+            <strong>Problem Solved:</strong> Without consistent mood monitoring, relapse triggers and early warning signs go undetected until a full crisis erupts.
           </p>
 
           <div style={{ padding: '12px 16px', borderRadius: '10px', background: 'var(--bg-page)', fontSize: '0.88rem', color: 'var(--primary-blue)', fontWeight: 600 }}>
-            ✓ Solution: Quick 1-5 emotional score check-in with optional voice note recording, permanently logged in Supabase PostgreSQL tables.
+            ✓ Daily 1-5 craving/stability score check-in with optional voice note — securely logged and accessible to caregivers for proactive intervention.
           </div>
         </div>
       </div>
 
-      {/* Tech Stack Architecture Section */}
+      {/* Platform Architecture Section */}
       <h2 style={{ fontSize: '1.75rem', fontWeight: 800, marginBottom: '28px', color: 'var(--primary-blue)', textAlign: 'center' }}>
-        Underneath the Hood — Tech Stack Powering Altruist AI
+        Platform Architecture — How It Works
       </h2>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
@@ -253,11 +254,11 @@ export default function LandingPage({ onLaunchDemo, onOpenAuth, onNavigateTab, u
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
             <Cpu size={26} color="var(--secondary-blue)" />
             <h4 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-heading)' }}>
-              Groq LLM Engine
+              Generative AI Engine
             </h4>
           </div>
           <p style={{ fontSize: '0.9rem', color: 'var(--text-body)', lineHeight: '1.6' }}>
-            Executes <code style={{ color: 'var(--primary-blue)', fontWeight: 700 }}>llama-3.3-70b-versatile</code> on ultra-fast LPUs. Generates real-time grounding scripts, caregiver coaching advice, and mental health Q&A answers without hardcoded canned responses.
+            Runs a large language model via ultra-fast LPU inference to generate real-time personalized recovery scripts, de-escalation guidance, and educational Q&A — never a canned response.
           </p>
         </div>
 
@@ -265,11 +266,11 @@ export default function LandingPage({ onLaunchDemo, onOpenAuth, onNavigateTab, u
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
             <Database size={26} color="var(--primary-blue)" />
             <h4 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-heading)' }}>
-              Supabase PostgreSQL
+              Secure Cloud Database
             </h4>
           </div>
           <p style={{ fontSize: '0.9rem', color: 'var(--text-body)', lineHeight: '1.6' }}>
-            Serves as the single architectural source of truth across 5 tables: <code style={{ color: 'var(--primary-blue)' }}>profiles</code>, <code style={{ color: 'var(--primary-blue)' }}>crisis_events</code>, <code style={{ color: 'var(--primary-blue)' }}>pulse_checks</code>, <code style={{ color: 'var(--primary-blue)' }}>caregiver_links</code>, and <code style={{ color: 'var(--primary-blue)' }}>caregiver_tips</code>.
+            Persistent PostgreSQL storage with authenticated access across 5 tables: user profiles, crisis events, daily check-ins, caregiver links, and AI coaching tips.
           </p>
         </div>
 
@@ -277,11 +278,11 @@ export default function LandingPage({ onLaunchDemo, onOpenAuth, onNavigateTab, u
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
             <Mic size={26} color="var(--accent-red)" />
             <h4 style={{ fontSize: '1.15rem', fontWeight: 700, color: 'var(--text-heading)' }}>
-              Browser Web Speech API
+              Zero-Typing Voice Interface
             </h4>
           </div>
           <p style={{ fontSize: '0.9rem', color: 'var(--text-body)', lineHeight: '1.6' }}>
-            Hands-free voice accessibility using browser-native <code style={{ color: 'var(--primary-blue)' }}>SpeechRecognition</code> for voice input and <code style={{ color: 'var(--primary-blue)' }}>SpeechSynthesis</code> for soothing audio readout.
+            Fully hands-free interaction using browser-native voice recognition for input and speech synthesis for audio readout — designed for high-stress, high-cognitive-load moments.
           </p>
         </div>
       </div>

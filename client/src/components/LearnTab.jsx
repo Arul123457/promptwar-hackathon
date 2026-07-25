@@ -11,57 +11,63 @@ export default function LearnTab() {
 
   const topicArticles = [
     {
-      id: 'panic',
-      title: 'Understanding Panic Attacks vs Anxiety',
-      category: 'Psychology',
-      icon: '🧠',
-      summary: 'Learn the physiological triggers of panic attacks and how to reset your nervous system.',
-      content: `A panic attack is a sudden surge of intense fear that reaches a peak within minutes.
+      id: 'cravings',
+      title: 'Understanding & Managing Cravings',
+      category: 'Recovery',
+      icon: '🔥',
+      summary: 'Learn why cravings peak, how long they last, and evidence-based techniques to ride them out safely.',
+      content: `A craving is an intense urge to use a substance, driven by dopamine pathways and environmental triggers.
       
-      Key Steps to Cope:
-      1. Acknowledge: Remind yourself "This is panic, it is uncomfortable, but it is NOT dangerous and WILL pass."
-      2. Grounding: Engage your 5 senses to bring your prefrontal cortex back online.
-      3. Controlled Breathing: Exhale longer than you inhale (4 sec in, 6 sec out).`
+      Key Steps to Ride Out a Craving (SURF technique):
+      1. Stop: Recognize the craving without judgment. Label it: "I am experiencing a craving."
+      2. Understand: Identify what triggered it — person, place, emotion, or time of day.
+      3. Ride: Most cravings peak at 20-30 minutes. Breathe through it — it will pass without action.
+      4. Feel: Use the 5-4-3-2-1 grounding method to anchor to the present moment.`
     },
     {
-      id: 'sensory',
-      title: 'Managing Sensory Overload',
-      category: 'Sensory Care',
-      icon: '🎧',
-      summary: 'Simple strategies to reduce overwhelming noise, bright lights, and crowded spaces.',
-      content: `Sensory overload occurs when your brain receives more input from your senses than it can process.
+      id: 'relapse',
+      title: 'Relapse Prevention: Warning Signs',
+      category: 'Prevention',
+      icon: '🛡️',
+      summary: 'Recognize emotional, mental, and behavioral warning signs before relapse occurs.',
+      content: `Relapse is a process, not a single event. It often begins weeks before any substance use.
       
-      Action Plan:
-      - Noise Control: Use noise-canceling headphones or earplugs.
-      - Lighting: Switch off fluorescent overheads; opt for soft lamps or dim blue light filters.
-      - Micro-breaks: Retreat to a designated quiet "safe zone" for 10 minutes.`
+      Three Stages of Relapse to Watch For:
+      1. Emotional Relapse: Bottling feelings, isolation, poor self-care, skipping meetings.
+      2. Mental Relapse: Craving thoughts, romanticizing past use, thinking about "just once."
+      3. Physical Relapse: Returning to substance use.
+
+      Action Plan: When you notice Stage 1 or 2 signs, call your sponsor, attend a meeting, or activate Altruist AI Crisis Support immediately.`
     },
     {
-      id: 'dementia',
-      title: 'Dementia Agitation & Communication',
-      category: 'Caregiving',
-      icon: '🤝',
-      summary: 'De-escalation tactics for memory loss, confusion, and evening restlessness (sundowning).',
-      content: `Agitation in dementia often stems from unmet needs, physical discomfort, or environmental overstimulation.
+      id: 'withdrawal',
+      title: 'Managing Withdrawal Symptoms',
+      category: 'Medical Support',
+      icon: '💊',
+      summary: 'Safe strategies for navigating withdrawal discomfort with caregiver coordination.',
+      content: `Withdrawal symptoms vary by substance but often include anxiety, sweating, insomnia, and irritability.
       
-      Communication Tips:
-      - Speak in low, calm tones using short 4-word sentences.
-      - Validate emotions rather than arguing over facts or memory gaps.
-      - Maintain familiar daily routines and reassuring touch.`
+      Safety Guidelines:
+      - Never attempt withdrawal from alcohol or benzodiazepines alone — medical supervision is essential.
+      - For other substances: hydrate, rest, and lean on your support network.
+      - Use breathing and grounding techniques to manage anxiety surges.
+      - Inform your caregiver of your status using the Altruist AI Caregiver link.`
     },
     {
       id: 'grounding',
       title: 'The Science of 5-4-3-2-1 Grounding',
       category: 'Techniques',
       icon: '🌿',
-      summary: 'How sensory indexing breaks the fight-or-flight anxiety feedback loop.',
-      content: `When panic strikes, the brain's amygdala triggers fight-or-flight. Sensory grounding forces the mind to shift focus from internal anxiety thoughts to external real-world physical facts.
+      summary: 'How sensory indexing breaks the craving and anxiety feedback loop.',
+      content: `During a craving or panic surge, the brain's reward pathways hijack attention toward the substance. Sensory grounding forces the mind to shift focus from internal craving thoughts to external real-world facts.
       
       - 5 Things you See
       - 4 Things you Touch
       - 3 Things you Hear
       - 2 Things you Smell
-      - 1 Thing you Taste`
+      - 1 Thing you Taste
+
+      This works because your brain cannot simultaneously process intense craving ideation AND external sensory data at full capacity.`
     }
   ];
 
@@ -106,10 +112,10 @@ export default function LearnTab() {
               fontWeight: 800,
               color: 'var(--text-main)'
             }}>
-              Altruist AI Knowledge Hub
+              AI-Powered Recovery Knowledge Hub
             </h2>
             <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)' }}>
-              Explore evidence-based coping guides and ask Groq AI any mental health or caregiving question.
+              Explore evidence-based recovery guides and ask our AI Assistant any substance use recovery or caregiving question.
             </p>
           </div>
         </div>
@@ -120,7 +126,7 @@ export default function LearnTab() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
           <Sparkles size={22} color="var(--primary-blue)" />
           <h3 style={{ fontSize: '1.25rem', fontWeight: 700, fontFamily: 'var(--font-heading)' }}>
-            Ask Groq Mental Health AI
+            Ask AI Recovery Assistant
           </h3>
         </div>
 
@@ -133,7 +139,7 @@ export default function LearnTab() {
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleSearchSubmit();
               }}
-              placeholder="Ask any coping question (e.g., How to manage panic attacks at night?)..."
+              placeholder="Ask any recovery question (e.g., How do I manage cravings at night? What are relapse warning signs?)..."
               style={{
                 width: '100%',
                 padding: '14px 16px 14px 44px',
@@ -186,7 +192,7 @@ export default function LearnTab() {
 
       {/* Article Library */}
       <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '20px', color: 'var(--text-main)' }}>
-        Recommended Coping Guides
+        Recovery Guides & Educational Resources
       </h3>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>

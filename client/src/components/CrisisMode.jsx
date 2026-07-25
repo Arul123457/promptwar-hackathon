@@ -141,7 +141,7 @@ export default function CrisisMode({ onLogIncident, user }) {
           fontWeight: 700,
           marginBottom: '8px'
         }}>
-          ● Active Emergency Grounding Mode
+          Altruist AI Recovery Support — Voice-Activated Crisis Intervention Mode
         </div>
         <h2 style={{
           fontFamily: 'var(--font-heading)',
@@ -153,7 +153,7 @@ export default function CrisisMode({ onLogIncident, user }) {
           Altruist AI Crisis Mode
         </h2>
         <p style={{ fontSize: '1rem', color: 'var(--text-muted)', maxWidth: '580px', margin: '0 auto' }}>
-          Tap the panic button below or speak naturally. Altruist AI will immediately guide you through grounding steps.
+          When a craving surge, relapse risk, or emotional crisis hits — press the button. Our AI delivers a personalized grounding script instantly, reading it aloud so you don't need to type anything.
         </p>
       </div>
 
@@ -443,7 +443,7 @@ export default function CrisisMode({ onLogIncident, user }) {
       {/* Crisis Event Log */}
       <div className="glass-panel" style={{ padding: '24px' }}>
         <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '16px', color: 'var(--text-muted)' }}>
-          Recent Grounding Sessions (Logged to Supabase)
+          Recent Recovery Sessions
         </h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {crisisHistory.map((item, index) => (
