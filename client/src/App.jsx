@@ -19,7 +19,6 @@ export default function App() {
   const [incidentLog, setIncidentLog] = useState([]);
 
   useEffect(() => {
-    // Pure light theme enforcement
     document.documentElement.setAttribute('data-theme', 'light');
 
     apiService.checkHealth().then((status) => setServerStatus(status));
@@ -49,6 +48,14 @@ export default function App() {
     setActiveTab('crisis');
   };
 
+  const handleTabSelect = (tab) => {
+    if (!user && (tab === 'crisis' || tab === 'caregiver' || tab === 'learn')) {
+      setShowAuthModal(true);
+    } else {
+      setActiveTab(tab);
+    }
+  };
+
   const handleLogIncident = (incident) => {
     setIncidentLog((prev) => [incident, ...prev]);
   };
@@ -57,9 +64,12 @@ export default function App() {
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-page)' }}>
       <Navbar
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleTabSelect}
         serverStatus={serverStatus}
-        onOpenPulse={() => setShowPulseModal(true)}
+        onOpenPulse={() => {
+          if (!user) setShowAuthModal(true);
+          else setShowPulseModal(true);
+        }}
         onOpenAuth={() => setShowAuthModal(true)}
         onDemoLogin={handleDemoLogin}
         user={user}
@@ -69,11 +79,9 @@ export default function App() {
         {activeTab === 'landing' && (
           <LandingPage
             onLaunchDemo={handleDemoLogin}
-            onNavigateTab={(tab) => {
-              if (tab === 'onboarding') setActiveTab('onboarding');
-              else if (tab === 'crisis') setActiveTab('crisis');
-              else setActiveTab(tab);
-            }}
+            onOpenAuth={() => setShowAuthModal(true)}
+            onNavigateTab={handleTabSelect}
+            user={user}
           />
         )}
         {activeTab === 'onboarding' && (

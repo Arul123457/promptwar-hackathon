@@ -57,7 +57,7 @@ export default function Navbar({ activeTab, setActiveTab, serverStatus, onOpenPu
           </div>
         </div>
 
-        {/* Mode Navigation Tabs */}
+        {/* Mode Navigation Tabs - Protected App Tabs Only Visible When Authenticated */}
         <nav style={{
           display: 'flex',
           background: 'var(--bg-page)',
@@ -86,90 +86,97 @@ export default function Navbar({ activeTab, setActiveTab, serverStatus, onOpenPu
             <Home size={16} /> Home
           </button>
 
-          <button
-            id="tab-crisis-mode"
-            onClick={() => setActiveTab('crisis')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '8px 14px',
-              borderRadius: '10px',
-              border: 'none',
-              cursor: 'pointer',
-              fontWeight: 600,
-              fontSize: '0.85rem',
-              transition: 'all 0.2s ease',
-              background: activeTab === 'crisis' ? 'var(--accent-red)' : 'transparent',
-              color: activeTab === 'crisis' ? '#ffffff' : 'var(--text-body)'
-            }}
-          >
-            <Radio size={16} /> Crisis
-          </button>
+          {/* Protected Navigation Tabs - Gated by User Authentication */}
+          {user && (
+            <>
+              <button
+                id="tab-crisis-mode"
+                onClick={() => setActiveTab('crisis')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 14px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  transition: 'all 0.2s ease',
+                  background: activeTab === 'crisis' ? 'var(--accent-red)' : 'transparent',
+                  color: activeTab === 'crisis' ? '#ffffff' : 'var(--text-body)'
+                }}
+              >
+                <Radio size={16} /> Crisis Mode
+              </button>
 
-          <button
-            id="tab-caregiver-mode"
-            onClick={() => setActiveTab('caregiver')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '8px 14px',
-              borderRadius: '10px',
-              border: 'none',
-              cursor: 'pointer',
-              fontWeight: 600,
-              fontSize: '0.85rem',
-              transition: 'all 0.2s ease',
-              background: activeTab === 'caregiver' ? 'var(--secondary-blue)' : 'transparent',
-              color: activeTab === 'caregiver' ? '#ffffff' : 'var(--text-body)'
-            }}
-          >
-            <HeartHandshake size={16} /> Caregiver
-          </button>
+              <button
+                id="tab-caregiver-mode"
+                onClick={() => setActiveTab('caregiver')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 14px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  transition: 'all 0.2s ease',
+                  background: activeTab === 'caregiver' ? 'var(--secondary-blue)' : 'transparent',
+                  color: activeTab === 'caregiver' ? '#ffffff' : 'var(--text-body)'
+                }}
+              >
+                <HeartHandshake size={16} /> Caregiver Mode
+              </button>
 
-          <button
-            id="tab-learn-mode"
-            onClick={() => setActiveTab('learn')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '8px 14px',
-              borderRadius: '10px',
-              border: 'none',
-              cursor: 'pointer',
-              fontWeight: 600,
-              fontSize: '0.85rem',
-              transition: 'all 0.2s ease',
-              background: activeTab === 'learn' ? 'var(--hover-blue)' : 'transparent',
-              color: activeTab === 'learn' ? '#ffffff' : 'var(--text-body)'
-            }}
-          >
-            <BookOpen size={16} /> Learn
-          </button>
+              <button
+                id="tab-learn-mode"
+                onClick={() => setActiveTab('learn')}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '8px 14px',
+                  borderRadius: '10px',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  transition: 'all 0.2s ease',
+                  background: activeTab === 'learn' ? 'var(--hover-blue)' : 'transparent',
+                  color: activeTab === 'learn' ? '#ffffff' : 'var(--text-body)'
+                }}
+              >
+                <BookOpen size={16} /> Learn Hub
+              </button>
+            </>
+          )}
         </nav>
 
         {/* Action Controls */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <button
-            onClick={onOpenPulse}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '8px 12px',
-              borderRadius: '10px',
-              border: '1px solid var(--border)',
-              background: 'rgba(59, 130, 246, 0.1)',
-              color: 'var(--primary-blue)',
-              fontSize: '0.82rem',
-              fontWeight: 700,
-              cursor: 'pointer'
-            }}
-          >
-            <Activity size={16} /> Daily Pulse
-          </button>
+          {user && (
+            <button
+              onClick={onOpenPulse}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 12px',
+                borderRadius: '10px',
+                border: '1px solid var(--border)',
+                background: 'rgba(59, 130, 246, 0.1)',
+                color: 'var(--primary-blue)',
+                fontSize: '0.82rem',
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
+            >
+              <Activity size={16} /> Daily Pulse
+            </button>
+          )}
 
           {user ? (
             <div style={{
@@ -184,7 +191,7 @@ export default function Navbar({ activeTab, setActiveTab, serverStatus, onOpenPu
               fontSize: '0.82rem',
               fontWeight: 700
             }}>
-              <UserCheck size={16} /> {user.email?.split('@')[0] || 'User'}
+              <UserCheck size={16} /> {user.email?.split('@')[0] || 'Authenticated User'}
             </div>
           ) : (
             <button

@@ -1,7 +1,7 @@
 import React from 'react';
-import { Shield, Radio, HeartHandshake, Activity, Mic, Cpu, Database, CheckCircle, ArrowRight, Key, Sparkles, Heart, HelpCircle, Lock } from 'lucide-react';
+import { Shield, Radio, HeartHandshake, Activity, Mic, Cpu, Database, CheckCircle, ArrowRight, Key, Sparkles, UserPlus, LogIn, Lock } from 'lucide-react';
 
-export default function LandingPage({ onLaunchDemo, onNavigateTab }) {
+export default function LandingPage({ onLaunchDemo, onOpenAuth, onNavigateTab, user }) {
   return (
     <div style={{ padding: '20px 0 60px' }}>
       {/* Hero Header Section */}
@@ -82,26 +82,29 @@ export default function LandingPage({ onLaunchDemo, onNavigateTab }) {
                 boxShadow: '0 8px 24px rgba(37, 99, 235, 0.35)'
               }}
             >
-              ⚡ Launch Live Demo App <ArrowRight size={20} />
+              ⚡ 1-Click Evaluator Demo Access <ArrowRight size={20} />
             </button>
 
             <button
-              onClick={() => onNavigateTab('crisis')}
+              onClick={() => {
+                if (user) onNavigateTab('onboarding');
+                else onOpenAuth();
+              }}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
                 padding: '16px 28px',
                 borderRadius: '12px',
-                border: '2px solid var(--accent-red)',
+                border: '2px solid var(--primary-blue)',
                 background: 'transparent',
-                color: 'var(--accent-red)',
+                color: 'var(--primary-blue)',
                 fontSize: '1rem',
                 fontWeight: 700,
                 cursor: 'pointer'
               }}
             >
-              <Radio size={20} /> Try One-Tap Crisis Button
+              <UserPlus size={20} /> Start Voice Onboarding / Register
             </button>
           </div>
 
@@ -132,7 +135,14 @@ export default function LandingPage({ onLaunchDemo, onNavigateTab }) {
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '28px', marginBottom: '56px' }}>
         {/* Feature 1: Crisis Support */}
-        <div className="glass-panel glass-panel-interactive" style={{ padding: '32px' }} onClick={() => onNavigateTab('crisis')}>
+        <div
+          className="glass-panel glass-panel-interactive"
+          style={{ padding: '32px' }}
+          onClick={() => {
+            if (user) onNavigateTab('crisis');
+            else onOpenAuth();
+          }}
+        >
           <div style={{
             width: '52px',
             height: '52px',
@@ -161,7 +171,14 @@ export default function LandingPage({ onLaunchDemo, onNavigateTab }) {
         </div>
 
         {/* Feature 2: Caregiver Tools */}
-        <div className="glass-panel glass-panel-interactive" style={{ padding: '32px' }} onClick={() => onNavigateTab('caregiver')}>
+        <div
+          className="glass-panel glass-panel-interactive"
+          style={{ padding: '32px' }}
+          onClick={() => {
+            if (user) onNavigateTab('caregiver');
+            else onOpenAuth();
+          }}
+        >
           <div style={{
             width: '52px',
             height: '52px',
@@ -190,7 +207,14 @@ export default function LandingPage({ onLaunchDemo, onNavigateTab }) {
         </div>
 
         {/* Feature 3: Daily Check-Ins */}
-        <div className="glass-panel glass-panel-interactive" style={{ padding: '32px' }} onClick={() => onNavigateTab('learn')}>
+        <div
+          className="glass-panel glass-panel-interactive"
+          style={{ padding: '32px' }}
+          onClick={() => {
+            if (user) onNavigateTab('learn');
+            else onOpenAuth();
+          }}
+        >
           <div style={{
             width: '52px',
             height: '52px',
