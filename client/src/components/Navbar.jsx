@@ -1,6 +1,18 @@
 import React from 'react';
 import { Shield, Radio, HeartHandshake, BookOpen, Home, Activity, Key, LogIn, UserCheck, LogOut } from 'lucide-react';
 
+/**
+ * Main Application Navigation Header Component
+ * @param {Object} props
+ * @param {string} props.activeTab - Currently active tab key ('landing'|'crisis'|'caregiver'|'learn')
+ * @param {Function} props.setActiveTab - Handler to update active tab
+ * @param {Object|null} props.serverStatus - Express server health status
+ * @param {Function} props.onOpenPulse - Handler to open Daily Check-In modal
+ * @param {Function} props.onOpenAuth - Handler to open Auth modal
+ * @param {Function} props.onDemoLogin - Handler to execute 1-click demo login
+ * @param {Function} props.onLogout - Handler to sign out of session
+ * @param {Object|null} props.user - Authenticated user object or null
+ */
 export default function Navbar({ activeTab, setActiveTab, serverStatus, onOpenPulse, onOpenAuth, onDemoLogin, onLogout, user }) {
   return (
     <header style={{

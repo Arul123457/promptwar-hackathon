@@ -1,6 +1,14 @@
 import React from 'react';
 import { Shield, Radio, HeartHandshake, Activity, Mic, Cpu, Database, ArrowRight, Key, Sparkles, UserPlus } from 'lucide-react';
 
+/**
+ * Public Marketing & Problem Statement Landing Page
+ * @param {Object} props
+ * @param {Function} props.onLaunchDemo - Handler to launch 1-click evaluator demo access
+ * @param {Function} props.onOpenAuth - Handler to open authentication modal
+ * @param {Function} props.onNavigateTab - Handler to navigate to application tabs
+ * @param {Object|null} props.user - Authenticated user object or null
+ */
 export default function LandingPage({ onLaunchDemo, onOpenAuth, onNavigateTab, user }) {
   return (
     <div style={{ padding: '20px 0 60px' }}>

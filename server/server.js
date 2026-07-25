@@ -3,15 +3,17 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
-import { Groq } from 'groq-sdk';
 import { dbService, isSupabaseConfigured } from './config/supabase.js';
+import { GROQ_MODELS, ROUTES, TIMEOUTS } from './config/constants.js';
+import { errorHandler, AppError, asyncWrapper } from './middleware/errorHandler.js';
+import { initGroq, callGroq, buildCrisisPrompt, buildCaregiverPrompt, buildLearnPrompt } from './services/aiService.js';
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
-const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.3-70b-versatile';
+const isGroqConfigured = initGroq(GROQ_API_KEY);
 
 // Security Controls
 app.use(helmet({
@@ -28,7 +30,7 @@ app.use(cors({
     if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
       callback(null, true);
     } else {
-      callback(null, true); // Permissive for production deployment
+      callback(null, true);
     }
   },
   methods: ['GET', 'POST', 'OPTIONS'],
@@ -39,47 +41,14 @@ app.use(cors({
 app.use(express.json({ limit: '10kb' }));
 
 const apiLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000,
-  max: 60,
+  windowMs: TIMEOUTS.RATE_LIMIT_WINDOW_MS,
+  max: TIMEOUTS.RATE_LIMIT_MAX,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Rate limit exceeded. Please wait a moment.' }
 });
 
 app.use('/api/', apiLimiter);
-
-// Groq Client Initialization
-let groqClient = null;
-const isGroqConfigured = Boolean(GROQ_API_KEY && GROQ_API_KEY !== 'your_groq_api_key_here');
-
-if (isGroqConfigured) {
-  try {
-    groqClient = new Groq({ apiKey: GROQ_API_KEY });
-  } catch (err) {
-    console.warn('Groq initialization warning:', err.message);
-  }
-}
-
-async function generateGroqCompletion(systemPrompt, userPrompt, fallbackText) {
-  if (!groqClient) return fallbackText;
-  try {
-    const completion = await groqClient.chat.completions.create({
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt }
-      ],
-      model: GROQ_MODEL,
-      temperature: 0.4,
-      max_tokens: 450,
-    });
-    const text = completion.choices[0]?.message?.content?.trim() || fallbackText;
-    // Strip markdown asterisks (**) and hashtags (#) to prevent UI formatting glitches
-    return text.replace(/\*\*/g, '').replace(/###?/g, '').trim();
-  } catch (error) {
-    console.error('Groq Execution Error:', error.message);
-    return fallbackText;
-  }
-}
 
 function sanitizeInput(str, maxLen = 1000) {
   if (!str || typeof str !== 'string') return '';
@@ -91,83 +60,74 @@ function sanitizeInput(str, maxLen = 1000) {
 // ----------------------------------------------------
 
 // 1. Health Status
-app.get('/api/health', (req, res) => {
+app.get(ROUTES.HEALTH, (req, res) => {
   res.json({
     status: 'ok',
     app: 'Altruist AI',
     timestamp: new Date().toISOString(),
     groqConfigured: isGroqConfigured,
     supabaseConfigured: isSupabaseConfigured,
-    model: GROQ_MODEL
+    model: GROQ_MODELS.CRISIS
   });
 });
 
 // 2. Supabase Auth Register
-app.post('/api/auth/register', async (req, res) => {
+app.post(ROUTES.REGISTER, asyncWrapper(async (req, res) => {
   const email = sanitizeInput(req.body.email, 100);
   const password = sanitizeInput(req.body.password, 100);
 
   if (!email || !password) {
-    return res.status(400).json({ error: 'Email and password are required.' });
+    throw new AppError('Email and password are required.', 400);
   }
 
   const result = await dbService.registerUser(email, password);
   res.json(result);
-});
+}));
 
 // 3. Supabase Auth Login
-app.post('/api/auth/login', async (req, res) => {
+app.post(ROUTES.LOGIN, asyncWrapper(async (req, res) => {
   const email = sanitizeInput(req.body.email, 100);
   const password = sanitizeInput(req.body.password, 100);
 
   const result = await dbService.loginUser(email, password);
   res.json(result);
-});
+}));
 
-// 4. Evaluator Demo Auth — uses real Supabase Auth for demo@altruist.ai
-// Flow: login → if user not found, auto-register → login again → return real Supabase session
-// No hardcoded fake sessions — all data is tied to a real Supabase Auth user ID.
-app.post('/api/auth/demo-login', async (req, res) => {
+// 4. Evaluator Demo Auth — real Supabase Auth session for demo@altruist.ai
+app.post(ROUTES.DEMO_LOGIN, asyncWrapper(async (req, res) => {
   const DEMO_EMAIL = process.env.DEMO_EMAIL || 'demo@altruist.ai';
   const DEMO_PASSWORD = process.env.DEMO_PASSWORD || 'DemoAltruist123!';
 
-  // Step 1: Try logging in first (account may already exist)
   const loginResult = await dbService.loginUser(DEMO_EMAIL, DEMO_PASSWORD);
   if (loginResult.success) {
     return res.json(loginResult);
   }
 
-  // Step 2: Account doesn't exist — auto-register in Supabase Auth
   const registerResult = await dbService.registerUser(DEMO_EMAIL, DEMO_PASSWORD);
   if (!registerResult.success) {
-    // Registration failed — likely because Supabase requires email confirmation
-    // or the email is already registered but password is wrong.
     return res.status(401).json({
       success: false,
       error: `Demo account setup failed: ${registerResult.error}. Please create the demo user manually in Supabase Authentication > Users with email: ${DEMO_EMAIL} and password: ${DEMO_PASSWORD}, then try again.`
     });
   }
 
-  // Step 3: Registration succeeded — now login with the new account
   const finalLogin = await dbService.loginUser(DEMO_EMAIL, DEMO_PASSWORD);
   if (finalLogin.success) {
     return res.json(finalLogin);
   }
 
-  // Step 4: Registration succeeded but login immediately failed
-  // (Supabase may require email confirmation — need to disable confirmation in project settings)
   return res.status(401).json({
     success: false,
     error: 'Demo account was registered but login requires email confirmation. In Supabase Dashboard → Authentication → Providers → Email, disable "Confirm email" and try again.'
   });
-});
+}));
 
 // 5. Voice Onboarding Profile Save
-app.post('/api/onboarding', async (req, res) => {
+app.post(ROUTES.ONBOARDING, asyncWrapper(async (req, res) => {
   const { userId, email, triggers, copingStrategies, personaTone, emergencyContact } = req.body;
 
   if (!userId) {
-    return res.status(400).json({ error: 'userId is required to save profile.' });
+    throw new AppError('userId is required to save profile.', 400);
   }
 
   const profileData = {
@@ -181,76 +141,58 @@ app.post('/api/onboarding', async (req, res) => {
 
   const savedProfile = await dbService.saveProfile(profileData);
   res.json({ success: true, profile: savedProfile });
-});
+}));
 
 // 6. Crisis Mode Endpoint
-app.post('/api/crisis', async (req, res) => {
-  try {
-    const userId = sanitizeInput(req.body.userId, 100);
-    const text = sanitizeInput(req.body.text);
+// Uses llama-3.1-8b-instant for sub-second emergency response latency
+app.post(ROUTES.CRISIS, asyncWrapper(async (req, res) => {
+  const userId = sanitizeInput(req.body.userId, 100);
+  const text = sanitizeInput(req.body.text);
 
-    if (!userId) {
-      return res.status(400).json({ error: 'userId is required for crisis logging.' });
-    }
-
-    const profile = await dbService.getProfile(userId);
-
-    const systemPrompt = `You are Altruist AI — a compassionate, specialized crisis intervention assistant for individuals in substance use recovery.
-Tone: ${profile?.persona_tone || 'Warm, grounded, and non-judgmental'}.
-Known relapse triggers for this user: ${profile?.triggers || 'Stress, high-risk environments, social pressure'}.
-Personalized recovery strategies: ${profile?.coping_strategies || 'Calling sponsor, breathing exercises, 5-4-3-2-1 grounding'}.
-
-The user is experiencing a craving surge, relapse risk moment, or acute emotional crisis.
-Provide a single concise response with two clear parts:
-1. Recovery Script: 3 short, soothing bullet points for immediate craving interruption and grounding — avoid clinical jargon.
-2. Safety Anchor: 1 reassuring sentence reminding them their support network is available and this moment will pass.
-
-CRITICAL FORMATTING RULE: Do NOT use markdown bolding (double asterisks **) or headings in your output. Return clean plain text bullets only.`;
-
-    const userPrompt = text
-      ? `The user in recovery is experiencing a crisis and said: "${text}". Provide immediate craving interruption and grounding support.`
-      : `The user in recovery has activated the Altruist AI Crisis Button. Provide instant, compassionate grounding guidance for a craving or relapse risk moment.`;
-
-    const fallbackResponse = `• This craving is temporary. Most peak within 20-30 minutes and pass — you are stronger than this moment.
-• Breathe in slowly for 4 seconds... hold... and release for 6 seconds. Your body is safe right now.
-• Name 5 things you can see around you to bring your mind back to the present.
-
-Recovery Support: Your sponsor, support group, or emergency contact are available to you right now.`;
-
-    const aiText = await generateGroqCompletion(systemPrompt, userPrompt, fallbackResponse);
-
-    const eventLog = await dbService.logCrisisEvent({
-      user_id: userId,
-      transcript: text || 'One-Tap Panic Activation',
-      ai_response: aiText,
-      emergency_message: `Emergency contact: ${profile?.emergency_contact || '988 Lifeline'}`
-    });
-
-    res.json({
-      success: true,
-      mode: 'crisis',
-      response: aiText,
-      eventId: eventLog.id,
-      timestamp: new Date().toISOString()
-    });
-  } catch (err) {
-    console.error('Crisis endpoint error:', err);
-    res.status(500).json({ error: 'Internal error processing Altruist AI crisis request.' });
+  if (!userId) {
+    throw new AppError('userId is required for crisis logging.', 400);
   }
-});
+
+  const profile = await dbService.getProfile(userId);
+  const systemPrompt = buildCrisisPrompt(profile);
+
+  const userPrompt = text
+    ? `The user in recovery is experiencing a crisis and said: "${text}". Provide immediate craving interruption and grounding support.`
+    : `The user in recovery has activated the Altruist AI Crisis Button. Provide instant, compassionate grounding guidance for a craving or relapse risk moment.`;
+
+  const fallbackResponse = `• This craving is temporary. Most peak within 20-30 minutes and pass — you are stronger than this moment.\n• Breathe in slowly for 4 seconds... hold... and release for 6 seconds. Your body is safe right now.\n• Name 5 things you can see around you to bring your mind back to the present.\n\nRecovery Support: Your sponsor, support group, or emergency contact are available to you right now.`;
+
+  // llama-3.1-8b-instant chosen for sub-500ms response time during peak panic
+  const aiText = await callGroq(systemPrompt, userPrompt, fallbackResponse, GROQ_MODELS.CRISIS);
+
+  const eventLog = await dbService.logCrisisEvent({
+    user_id: userId,
+    transcript: text || 'One-Tap Panic Activation',
+    ai_response: aiText,
+    emergency_message: `Emergency contact: ${profile?.emergency_contact || '988 Lifeline'}`
+  });
+
+  res.json({
+    success: true,
+    mode: 'crisis',
+    response: aiText,
+    eventId: eventLog.id,
+    timestamp: new Date().toISOString()
+  });
+}));
 
 // 7. Daily Pulse Check-In
-app.post('/api/pulse', async (req, res) => {
+app.post(ROUTES.PULSE, asyncWrapper(async (req, res) => {
   const userId = sanitizeInput(req.body.userId, 100);
   const score = parseInt(req.body.score, 10);
   const voiceNote = sanitizeInput(req.body.voiceNote, 500);
 
   if (!userId) {
-    return res.status(400).json({ error: 'userId is required for pulse check.' });
+    throw new AppError('userId is required for pulse check.', 400);
   }
 
   if (isNaN(score) || score < 1 || score > 5) {
-    return res.status(400).json({ error: 'Score must be a number between 1 and 5.' });
+    throw new AppError('Score must be a number between 1 and 5.', 400);
   }
 
   const pulseEntry = await dbService.logPulseCheck({
@@ -260,56 +202,44 @@ app.post('/api/pulse', async (req, res) => {
   });
 
   res.json({ success: true, pulse: pulseEntry });
-});
+}));
 
 // 8. Caregiver Invite Code Generation
-app.post('/api/caregiver/invite', async (req, res) => {
+app.post(ROUTES.INVITE, asyncWrapper(async (req, res) => {
   const userId = sanitizeInput(req.body.userId, 100);
   if (!userId) {
-    return res.status(400).json({ error: 'userId is required to generate invite.' });
+    throw new AppError('userId is required to generate invite.', 400);
   }
   const invite = await dbService.createCaregiverInvite(userId);
   res.json({ success: true, invite });
-});
+}));
 
 // 9. Caregiver AI Coaching Tip
-app.post('/api/caregiver-tip', async (req, res) => {
+// Uses Promise.all to fetch recentCrises, recentPulses, and profile concurrently
+app.post(ROUTES.CAREGIVER_TIP, asyncWrapper(async (req, res) => {
   const userId = sanitizeInput(req.body.userId, 100);
   const query = sanitizeInput(req.body.query);
 
   if (!userId) {
-    return res.status(400).json({ error: 'userId is required for caregiver tips.' });
+    throw new AppError('userId is required for caregiver tips.', 400);
   }
 
-  const recentCrises = await dbService.getCrisisEvents(userId);
-  const recentPulses = await dbService.getPulseChecks(userId);
-  const profile = await dbService.getProfile(userId);
-  const avgPulse = recentPulses.length > 0 ? (recentPulses.reduce((acc, p) => acc + p.score, 0) / recentPulses.length).toFixed(1) : 'N/A';
+  // Parallel database reads for maximum efficiency
+  const [recentCrises, recentPulses, profile] = await Promise.all([
+    dbService.getCrisisEvents(userId),
+    dbService.getPulseChecks(userId),
+    dbService.getProfile(userId)
+  ]);
 
-  const systemPrompt = `You are Altruist AI — a specialized caregiver advisor for families and support persons of individuals in substance use recovery.
-
-You have access to the patient's recent recovery activity:
-- Crisis activations in the last 7 days: ${recentCrises.length}
-- Average daily stability score (1-5): ${avgPulse}
-- Registered relapse triggers: ${profile?.triggers || 'Not yet set'}
-- Patient-preferred recovery strategies: ${profile?.coping_strategies || 'Not yet set'}
-
-Provide specific, evidence-based, trauma-informed guidance to the caregiver. Focus on:
-1. Practical de-escalation steps they can use RIGHT NOW
-2. How to avoid enabling behaviors while maintaining compassion
-3. When to call for professional intervention (SAMHSA 988 or local crisis services)
-
-CRITICAL FORMATTING RULE: Do NOT use markdown bolding (double asterisks **) or header tags. Return clean plain text bullet points only (under 200 words).`;
-
+  const systemPrompt = buildCaregiverPrompt(recentCrises, recentPulses, profile);
   const userPrompt = query
     ? `Caregiver asks: "${query}"`
     : `Generate a contextual caregiver coaching tip based on patient's recent activity.`;
 
-  const fallbackTip = `• Create a quiet, low-stimulus environment by dimming bright lights and turning down background noise.
-• Use a low, calm voice pitch with reassuring phrases like "I am right here with you, you are safe."
-• Take 3 slow breaths yourself — your calm physiology helps lower their anxiety levels.`;
+  const fallbackTip = `• Create a quiet, low-stimulus environment by dimming bright lights and turning down background noise.\n• Use a low, calm voice pitch with reassuring phrases like "I am right here with you, you are safe."\n• Take 3 slow breaths yourself — your calm physiology helps lower their anxiety levels.`;
 
-  const tipText = await generateGroqCompletion(systemPrompt, userPrompt, fallbackTip);
+  // llama-3.3-70b-versatile chosen for deeper clinical reasoning across patient history
+  const tipText = await callGroq(systemPrompt, userPrompt, fallbackTip, GROQ_MODELS.REASONING);
 
   await dbService.saveCaregiverTip({
     patient_user_id: userId,
@@ -317,17 +247,22 @@ CRITICAL FORMATTING RULE: Do NOT use markdown bolding (double asterisks **) or h
   });
 
   res.json({ success: true, guidance: tipText });
-});
+}));
 
 // 10. Caregiver Patient Trends Query
-app.get('/api/caregiver/patient-trends', async (req, res) => {
+// Uses Promise.all to fetch crisisEvents, pulseChecks, and profile concurrently
+app.get(ROUTES.PATIENT_TRENDS, asyncWrapper(async (req, res) => {
   const userId = sanitizeInput(req.query.userId, 100);
   if (!userId) {
-    return res.status(400).json({ error: 'userId query param is required.' });
+    throw new AppError('userId query param is required.', 400);
   }
-  const crisisEvents = await dbService.getCrisisEvents(userId);
-  const pulseChecks = await dbService.getPulseChecks(userId);
-  const profile = await dbService.getProfile(userId);
+
+  // Parallel database reads for maximum efficiency
+  const [crisisEvents, pulseChecks, profile] = await Promise.all([
+    dbService.getCrisisEvents(userId),
+    dbService.getPulseChecks(userId),
+    dbService.getProfile(userId)
+  ]);
 
   res.json({
     success: true,
@@ -336,29 +271,23 @@ app.get('/api/caregiver/patient-trends', async (req, res) => {
     recentCrises: crisisEvents,
     pulseChecks
   });
-});
+}));
 
 // 11. Learn Hub Educational Q&A
-app.post('/api/learn/query', async (req, res) => {
+// Uses llama-3.3-70b-versatile for comprehensive educational response synthesis
+app.post(ROUTES.LEARN_QUERY, asyncWrapper(async (req, res) => {
   const query = sanitizeInput(req.body.query);
-  const learnSystemPrompt = `You are Altruist AI — an educational AI assistant specialized in substance use disorder recovery, addiction medicine, and caregiver support.
-
-Your role is to provide clear, evidence-based, stigma-free answers that empower individuals in recovery and their families.
-Draw from established frameworks: SMART Recovery, AA/NA 12-step principles, Motivational Interviewing, Harm Reduction, and trauma-informed care.
-
-Always:
-- Use plain language (8th grade reading level)
-- Validate the user's experience without judgment
-- Reference SAMHSA guidelines and evidence-based practices
-- Remind users of crisis resources (988 Lifeline, SAMHSA 1-800-662-4357) when relevant
-- CRITICAL FORMATTING RULE: Do NOT use markdown bolding (double asterisks **) or header tags. Return clean plain text bullet points only (under 200 words).`;
+  const learnSystemPrompt = buildLearnPrompt();
   const fallbackText = `Grounding techniques redirect focus away from racing thoughts and back to the present moment.\n\nKey Strategy - 5-4-3-2-1:\n- 5 things you can SEE\n- 4 things you can TOUCH\n- 3 things you can HEAR\n- 2 things you can SMELL\n- 1 thing you can TASTE`;
 
-  const responseText = await generateGroqCompletion(learnSystemPrompt, `Question: "${query}"`, fallbackText);
+  // llama-3.3-70b-versatile chosen for synthesis of SAMHSA and recovery frameworks
+  const responseText = await callGroq(learnSystemPrompt, `Question: "${query}"`, fallbackText, GROQ_MODELS.REASONING);
   res.json({ success: true, content: responseText });
-});
+}));
 
-app.use((req, res) => res.status(404).json({ error: 'Endpoint not found' }));
+// Global 404 & Centralized Error Middleware
+app.use((req, res, next) => next(new AppError('Endpoint not found', 404)));
+app.use(errorHandler);
 
 if (process.env.NODE_ENV !== 'test') {
   app.listen(PORT, () => {

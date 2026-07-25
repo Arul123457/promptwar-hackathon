@@ -3,6 +3,13 @@ import { Activity, X, Mic, MicOff, Check, Heart } from 'lucide-react';
 import { speechService } from '../services/speechService';
 import { apiService } from '../services/apiService';
 
+/**
+ * Daily Emotional Stability & Craving Check-In Modal Component
+ * @param {Object} props
+ * @param {boolean} props.isOpen - Whether modal is visible
+ * @param {Function} props.onClose - Handler to close modal
+ * @param {Object|null} props.user - Authenticated user object
+ */
 export default function DailyPulseModal({ isOpen, onClose, user }) {
   const [score, setScore] = useState(3);
   const [voiceNote, setVoiceNote] = useState('');

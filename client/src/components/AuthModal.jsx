@@ -2,6 +2,13 @@ import React, { useState } from 'react';
 import { Key, Mail, Lock, X, ShieldCheck, UserPlus, LogIn, AlertCircle } from 'lucide-react';
 import { apiService } from '../services/apiService';
 
+/**
+ * Authentication Modal Component
+ * @param {Object} props
+ * @param {boolean} props.isOpen - Whether modal is open
+ * @param {Function} props.onClose - Handler to close modal
+ * @param {Function} props.onAuthSuccess - Callback on successful authentication
+ */
 export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
   const [tab, setTab] = useState('login'); // 'login' | 'register'
   const [email, setEmail] = useState('');

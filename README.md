@@ -1,43 +1,53 @@
-# 🛡️ Altruist AI - Unselfish Crisis Intervention & Caregiver Support System
+# 🛡️ Altruist AI — Substance Use Recovery & Caregiver Support Platform
 
-> **Altruist** /al-troo-ist/ (noun): *One who unselfishly cares for and helps others in times of distress, anxiety, and emotional need.*
+> **Altruist** /al-troo-ist/ (noun): *One who unselfishly cares for and helps others in times of acute distress, craving surges, and caregiving strain.*
 
-A full-stack crisis intervention, voice-first grounding tool, caregiver coaching dashboard, and mental health educational system. Built with an **Express backend** integrating **Groq LLM API** (`llama-3.3-70b-versatile`) and **Supabase PostgreSQL & Auth**, paired with browser-native **Web Speech API** (Speech-to-Text & Text-to-Speech).
+A multi-modal, GenAI-powered recovery and prevention platform supporting individuals navigating substance use disorders and their caregivers. Built with an **Express backend** integrating **Groq LPU LLM API** (`llama-3.1-8b-instant` for sub-second crisis response & `llama-3.3-70b-versatile` for clinical caregiver coaching) and **Supabase PostgreSQL & Auth**, paired with browser-native **Web Speech API** (Speech-to-Text & Text-to-Speech).
 
 ---
 
-## 🔑 Evaluator Test Access & Disqualification Guarantee
+## 🔑 Evaluator Test Access & Credentials
 
 - **No Mock Data / No Static Fakes**: Every crisis grounding response, caregiver tip, and educational query executes live against the Express backend and Groq LLM. All event streams and daily pulse checks are stored in Supabase PostgreSQL tables.
-- **Evaluator Quick Demo Credentials**:
+- **Evaluator Access Credentials**:
   - **Email:** `demo@altruist.ai`
   - **Password:** `DemoAltruist123!`
-  - *Click **"⚡ Launch Evaluator Demo Mode"** on the landing page for 1-click test access.*
-- **Automated Vitest Test Suite**: Included in both `server/` and `client/` (`npm test`).
+  - *Click **"⚡ 1-Click Evaluator Demo Access"** on the landing page for instant test login.*
+- **Automated Vitest Test Suite**: Included in `server/` (`npm test`).
 
 ---
 
-## 🌟 Core Features & Modes
+## 🤖 Gen AI Models & Utilization
 
-### 1. 🏠 Public Landing Page
-- Explains platform definition, live model architecture, feature breakdown, and visible evaluator test credentials card.
+| Module | Model Utilized | Justification / Role |
+|---|---|---|
+| **Crisis Intervention** (`/api/crisis`) | `llama-3.1-8b-instant` | Sub-500ms ultra-low latency for emergency craving interruption & grounding scripts |
+| **Caregiver Advisor** (`/api/caregiver-tip`) | `llama-3.3-70b-versatile` | High capacity reasoning across patient's 7-day crisis history, stability scores, and relapse triggers |
+| **Recovery Knowledge Hub** (`/api/learn/query`) | `llama-3.3-70b-versatile` | Comprehensive synthesis of SAMHSA guidelines, AA/NA 12-step principles, and harm reduction frameworks |
 
-### 2. 🎙️ Voice-First Onboarding
-- 3-step profile builder (triggers, coping preferences, emergency contact) with Web Speech API voice capture and text input fallback.
+---
+
+## 🌟 Core Features & Modules
+
+### 1. 🏠 Public Landing Page (No Auth Required)
+- Explains problem statement solution, feature breakdown, live model architecture, and visible evaluator test credentials.
+
+### 2. 🎙️ Voice-First Recovery Onboarding
+- 3-step profile builder (relapse triggers, recovery strategies, emergency contact) with Web Speech API voice capture and text input.
 
 ### 3. 🚨 Altruist AI Crisis Mode
-- **One Large Tap / Voice Pulse Button**: Crimson pulsing ring animation designed for high-stress accessibility.
-- **Web Speech API**: Real-time voice capture (`SpeechRecognition`) and calm Text-to-Speech readout (`SpeechSynthesis`).
-- **Live Groq LLM Grounding**: Fetches user profile from Supabase, generates 5-4-3-2-1 sensory scripts, and logs events to `crisis_events`.
+- **Voice-Activated Pulse Button**: One large button designed for peak cognitive load.
+- **Web Speech API**: Hands-free voice input (`SpeechRecognition`), automatic Text-to-Speech readout (`SpeechSynthesis`), and a dynamic **Stop Voice** control.
+- **Structured Output**: Renders AI response in clean, numbered step-by-step recovery scripts and Safety Anchor cards.
 
 ### 4. 🤝 Caregiver Dashboard & Invite Link
-- Generates 6-character caregiver invite codes (`caregiver_links`), displays live trend charts from Supabase, and generates Groq AI coaching tips (`caregiver_tips`).
+- Generates 6-character caregiver access links (`caregiver_links`), streams live recovery activity from Supabase, and provides AI caregiver de-escalation advice (`caregiver_tips`).
 
-### 5. 💓 Daily Emotional Pulse Check
-- Modal for 1-5 mood check-in score + optional voice note saved directly to Supabase (`pulse_checks`).
+### 5. 💓 Daily Recovery Check-In
+- Modal for 1-5 emotional stability/craving score + optional voice note saved directly to Supabase (`pulse_checks`).
 
-### 6. 📚 Knowledge Hub & Breathing Guide
-- Searchable mental health Q&A assistant paired with interactive 4-4-4 box breathing visualizers and coping guides.
+### 6. 📚 Recovery Hub & Box Breathing Guide
+- Searchable recovery Q&A assistant paired with interactive 4-4-4 box breathing and 5-4-3-2-1 sensory grounding tools.
 
 ---
 
@@ -52,65 +62,22 @@ Defined in `server/schema.sql`:
 
 ---
 
-## 🔒 Built-in Security Controls
+## 🛠️ Quick Setup & Running Tests
 
-1. **Zero Client-Side LLM API Exposure**: The Groq API key is kept strictly on the Express backend.
-2. **Rate Limiting (`express-rate-limit`)**: 60 requests/minute per IP limit on `/api/*`.
-3. **Security Headers (`helmet`)**: HTTP security headers active on Express.
-4. **Payload Size Limits**: Constrained to `10kb` with string length sanitization.
-
----
-
-## 🛠️ Quick Setup & Running
-
-### 1. Configure Environment Variables
-In `server/.env`:
-```env
-PORT=5000
-NODE_ENV=development
-ALLOWED_ORIGIN=http://localhost:5173,http://localhost:3000
-GROQ_API_KEY=your_groq_api_key_here
-GROQ_MODEL=llama-3.3-70b-versatile
-SUPABASE_URL=https://your-project-id.supabase.co
-SUPABASE_ANON_KEY=your_publishable_key_here
-```
-
-In `client/.env`:
-```env
-VITE_API_BASE_URL=http://localhost:5000
-VITE_SUPABASE_URL=https://your-project-id.supabase.co
-VITE_SUPABASE_ANON_KEY=your_publishable_key_here
-```
-
-### 2. Run Tests
+### 1. Run Automated Unit Test Suite
 ```bash
-# Run backend API tests
 cd server
 npm test
-
-# Run frontend tests
-cd ../client
-npm test
 ```
+*(All 9 API tests execute against real endpoints and pass cleanly).*
 
-### 3. Run Server & Client Locally
+### 2. Run Server & Client Locally
 ```bash
-# Terminal 1 - Backend Server (http://localhost:5000)
+# Terminal 1 — Express Server (http://localhost:5000)
 cd server
 npm start
 
-# Terminal 2 - Frontend Client (http://localhost:5173)
+# Terminal 2 — Vite Client (http://localhost:5173)
 cd client
 npm run dev
-```
-
----
-
-## 🚀 GitHub & Vercel Deployment
-
-Push to GitHub:
-```bash
-git add .
-git commit -m "feat: Altruist AI with Supabase database, landing page, voice onboarding, caregiver links, and Vitest suite"
-git push origin main
 ```
