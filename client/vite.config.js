@@ -12,5 +12,19 @@ export default defineConfig({
         secure: false
       }
     }
+  },
+  build: {
+    target: 'es2020',
+    cssCodeSplit: true,
+    sourcemap: false,
+    minify: 'esbuild',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          icons: ['lucide-react']
+        }
+      }
+    }
   }
 });
