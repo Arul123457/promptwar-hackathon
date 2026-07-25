@@ -1,5 +1,6 @@
 /**
  * Centralized Error Handler Middleware
+ * Enforces standardized response envelope { success: false, data: null, error: string }
  */
 
 export function errorHandler(err, req, res, next) {
@@ -9,8 +10,9 @@ export function errorHandler(err, req, res, next) {
   const message = err.isPublic ? err.message : (err.message || 'Internal server error processing request.');
 
   res.status(statusCode).json({
-    error: message,
-    success: false
+    success: false,
+    data: null,
+    error: message
   });
 }
 

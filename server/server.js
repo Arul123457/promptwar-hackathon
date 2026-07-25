@@ -6,6 +6,7 @@ import rateLimit from 'express-rate-limit';
 import { dbService, isSupabaseConfigured } from './config/supabase.js';
 import { GROQ_MODELS, ROUTES, TIMEOUTS } from './config/constants.js';
 import { errorHandler, AppError, asyncWrapper } from './middleware/errorHandler.js';
+import { validateBody, schemas } from './middleware/validation.js';
 import { initGroq, callGroq, buildCrisisPrompt, buildCaregiverPrompt, buildLearnPrompt } from './services/aiService.js';
 
 dotenv.config();
@@ -13,6 +14,26 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
+
+// Fail-fast environment variable diagnostic check
+function validateEnvOnStartup() {
+  if (process.env.STRICT_ENV === 'true') {
+    const required = ['GROQ_API_KEY', 'SUPABASE_URL', 'SUPABASE_ANON_KEY'];
+    const missing = required.filter(k => !process.env[k] || process.env[k].includes('your-'));
+    if (missing.length > 0) {
+      throw new Error(`[CRITICAL CONFIG ERROR] Missing required environment variables: ${missing.join(', ')}`);
+    }
+  } else {
+    if (!GROQ_API_KEY || GROQ_API_KEY === 'your_groq_api_key_here') {
+      console.warn('[CONFIG WARN] GROQ_API_KEY is unset. AI completion engine is active in graceful fallback mode.');
+    }
+    if (!process.env.SUPABASE_URL || process.env.SUPABASE_URL.includes('your-project-id')) {
+      console.warn('[CONFIG WARN] SUPABASE_URL is unset. Database is operating in memory persistence mode.');
+    }
+  }
+}
+
+validateEnvOnStartup();
 const isGroqConfigured = initGroq(GROQ_API_KEY);
 
 // Security Controls
@@ -45,7 +66,7 @@ const apiLimiter = rateLimit({
   max: TIMEOUTS.RATE_LIMIT_MAX,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: 'Rate limit exceeded. Please wait a moment.' }
+  message: { success: false, data: null, error: 'Rate limit exceeded. Please wait a moment.' }
 });
 
 app.use('/api/', apiLimiter);
@@ -62,35 +83,57 @@ function sanitizeInput(str, maxLen = 1000) {
 // 1. Health Status
 app.get(ROUTES.HEALTH, (req, res) => {
   res.json({
+    success: true,
+    data: {
+      status: 'ok',
+      app: 'Altruist AI',
+      timestamp: new Date().toISOString(),
+      groqConfigured: isGroqConfigured,
+      supabaseConfigured: isSupabaseConfigured,
+      model: GROQ_MODELS.CRISIS
+    },
+    error: null,
+    // Backward compatibility aliases
     status: 'ok',
-    app: 'Altruist AI',
-    timestamp: new Date().toISOString(),
     groqConfigured: isGroqConfigured,
-    supabaseConfigured: isSupabaseConfigured,
-    model: GROQ_MODELS.CRISIS
+    supabaseConfigured: isSupabaseConfigured
   });
 });
 
 // 2. Supabase Auth Register
-app.post(ROUTES.REGISTER, asyncWrapper(async (req, res) => {
-  const email = sanitizeInput(req.body.email, 100);
-  const password = sanitizeInput(req.body.password, 100);
+app.post(ROUTES.REGISTER, validateBody(schemas.register), asyncWrapper(async (req, res) => {
+  const { email, password } = req.validatedBody;
+  const result = await dbService.registerUser(email, password);
 
-  if (!email || !password) {
-    throw new AppError('Email and password are required.', 400);
+  if (!result.success) {
+    throw new AppError(result.error || 'Registration failed', 400);
   }
 
-  const result = await dbService.registerUser(email, password);
-  res.json(result);
+  res.json({
+    success: true,
+    data: result.user,
+    user: result.user,
+    session: result.session,
+    error: null
+  });
 }));
 
 // 3. Supabase Auth Login
-app.post(ROUTES.LOGIN, asyncWrapper(async (req, res) => {
-  const email = sanitizeInput(req.body.email, 100);
-  const password = sanitizeInput(req.body.password, 100);
-
+app.post(ROUTES.LOGIN, validateBody(schemas.login), asyncWrapper(async (req, res) => {
+  const { email, password } = req.validatedBody;
   const result = await dbService.loginUser(email, password);
-  res.json(result);
+
+  if (!result.success) {
+    throw new AppError(result.error || 'Invalid credentials', 401);
+  }
+
+  res.json({
+    success: true,
+    data: result.user,
+    user: result.user,
+    session: result.session,
+    error: null
+  });
 }));
 
 // 4. Evaluator Demo Auth — real Supabase Auth session for demo@altruist.ai
@@ -100,35 +143,45 @@ app.post(ROUTES.DEMO_LOGIN, asyncWrapper(async (req, res) => {
 
   const loginResult = await dbService.loginUser(DEMO_EMAIL, DEMO_PASSWORD);
   if (loginResult.success) {
-    return res.json(loginResult);
+    return res.json({
+      success: true,
+      data: loginResult.user,
+      user: loginResult.user,
+      session: loginResult.session,
+      error: null
+    });
   }
 
   const registerResult = await dbService.registerUser(DEMO_EMAIL, DEMO_PASSWORD);
   if (!registerResult.success) {
     return res.status(401).json({
       success: false,
+      data: null,
       error: `Demo account setup failed: ${registerResult.error}. Please create the demo user manually in Supabase Authentication > Users with email: ${DEMO_EMAIL} and password: ${DEMO_PASSWORD}, then try again.`
     });
   }
 
   const finalLogin = await dbService.loginUser(DEMO_EMAIL, DEMO_PASSWORD);
   if (finalLogin.success) {
-    return res.json(finalLogin);
+    return res.json({
+      success: true,
+      data: finalLogin.user,
+      user: finalLogin.user,
+      session: finalLogin.session,
+      error: null
+    });
   }
 
   return res.status(401).json({
     success: false,
-    error: 'Demo account was registered but login requires email confirmation. In Supabase Dashboard → Authentication → Providers → Email, disable "Confirm email" and try again.'
+    data: null,
+    error: 'Demo account registered but requires email confirmation. In Supabase Dashboard → Authentication → Providers → Email, disable "Confirm email" and try again.'
   });
 }));
 
 // 5. Voice Onboarding Profile Save
-app.post(ROUTES.ONBOARDING, asyncWrapper(async (req, res) => {
-  const { userId, email, triggers, copingStrategies, personaTone, emergencyContact } = req.body;
-
-  if (!userId) {
-    throw new AppError('userId is required to save profile.', 400);
-  }
+app.post(ROUTES.ONBOARDING, validateBody(schemas.onboarding), asyncWrapper(async (req, res) => {
+  const { userId, email, triggers, copingStrategies, personaTone, emergencyContact } = req.validatedBody;
 
   const profileData = {
     user_id: sanitizeInput(userId, 100),
@@ -140,18 +193,18 @@ app.post(ROUTES.ONBOARDING, asyncWrapper(async (req, res) => {
   };
 
   const savedProfile = await dbService.saveProfile(profileData);
-  res.json({ success: true, profile: savedProfile });
+  res.json({
+    success: true,
+    data: { profile: savedProfile },
+    profile: savedProfile,
+    error: null
+  });
 }));
 
 // 6. Crisis Mode Endpoint
 // Uses llama-3.1-8b-instant for sub-second emergency response latency
-app.post(ROUTES.CRISIS, asyncWrapper(async (req, res) => {
-  const userId = sanitizeInput(req.body.userId, 100);
-  const text = sanitizeInput(req.body.text);
-
-  if (!userId) {
-    throw new AppError('userId is required for crisis logging.', 400);
-  }
+app.post(ROUTES.CRISIS, validateBody(schemas.crisis), asyncWrapper(async (req, res) => {
+  const { userId, text } = req.validatedBody;
 
   const profile = await dbService.getProfile(userId);
   const systemPrompt = buildCrisisPrompt(profile);
@@ -162,7 +215,6 @@ app.post(ROUTES.CRISIS, asyncWrapper(async (req, res) => {
 
   const fallbackResponse = `• This craving is temporary. Most peak within 20-30 minutes and pass — you are stronger than this moment.\n• Breathe in slowly for 4 seconds... hold... and release for 6 seconds. Your body is safe right now.\n• Name 5 things you can see around you to bring your mind back to the present.\n\nRecovery Support: Your sponsor, support group, or emergency contact are available to you right now.`;
 
-  // llama-3.1-8b-instant chosen for sub-500ms response time during peak panic
   const aiText = await callGroq(systemPrompt, userPrompt, fallbackResponse, GROQ_MODELS.CRISIS);
 
   const eventLog = await dbService.logCrisisEvent({
@@ -174,57 +226,55 @@ app.post(ROUTES.CRISIS, asyncWrapper(async (req, res) => {
 
   res.json({
     success: true,
+    data: {
+      mode: 'crisis',
+      response: aiText,
+      eventId: eventLog.id,
+      timestamp: new Date().toISOString()
+    },
     mode: 'crisis',
     response: aiText,
     eventId: eventLog.id,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    error: null
   });
 }));
 
 // 7. Daily Pulse Check-In
-app.post(ROUTES.PULSE, asyncWrapper(async (req, res) => {
-  const userId = sanitizeInput(req.body.userId, 100);
-  const score = parseInt(req.body.score, 10);
-  const voiceNote = sanitizeInput(req.body.voiceNote, 500);
-
-  if (!userId) {
-    throw new AppError('userId is required for pulse check.', 400);
-  }
-
-  if (isNaN(score) || score < 1 || score > 5) {
-    throw new AppError('Score must be a number between 1 and 5.', 400);
-  }
+app.post(ROUTES.PULSE, validateBody(schemas.pulse), asyncWrapper(async (req, res) => {
+  const { userId, score, voiceNote } = req.validatedBody;
 
   const pulseEntry = await dbService.logPulseCheck({
     user_id: userId,
     score,
-    voice_note: voiceNote || ''
+    voice_note: sanitizeInput(voiceNote, 500) || ''
   });
 
-  res.json({ success: true, pulse: pulseEntry });
+  res.json({
+    success: true,
+    data: { pulse: pulseEntry },
+    pulse: pulseEntry,
+    error: null
+  });
 }));
 
 // 8. Caregiver Invite Code Generation
-app.post(ROUTES.INVITE, asyncWrapper(async (req, res) => {
-  const userId = sanitizeInput(req.body.userId, 100);
-  if (!userId) {
-    throw new AppError('userId is required to generate invite.', 400);
-  }
+app.post(ROUTES.INVITE, validateBody(schemas.invite), asyncWrapper(async (req, res) => {
+  const { userId } = req.validatedBody;
   const invite = await dbService.createCaregiverInvite(userId);
-  res.json({ success: true, invite });
+  res.json({
+    success: true,
+    data: { invite },
+    invite,
+    error: null
+  });
 }));
 
 // 9. Caregiver AI Coaching Tip
 // Uses Promise.all to fetch recentCrises, recentPulses, and profile concurrently
-app.post(ROUTES.CAREGIVER_TIP, asyncWrapper(async (req, res) => {
-  const userId = sanitizeInput(req.body.userId, 100);
-  const query = sanitizeInput(req.body.query);
+app.post(ROUTES.CAREGIVER_TIP, validateBody(schemas.caregiverTip), asyncWrapper(async (req, res) => {
+  const { userId, query } = req.validatedBody;
 
-  if (!userId) {
-    throw new AppError('userId is required for caregiver tips.', 400);
-  }
-
-  // Parallel database reads for maximum efficiency
   const [recentCrises, recentPulses, profile] = await Promise.all([
     dbService.getCrisisEvents(userId),
     dbService.getPulseChecks(userId),
@@ -238,7 +288,6 @@ app.post(ROUTES.CAREGIVER_TIP, asyncWrapper(async (req, res) => {
 
   const fallbackTip = `• Create a quiet, low-stimulus environment by dimming bright lights and turning down background noise.\n• Use a low, calm voice pitch with reassuring phrases like "I am right here with you, you are safe."\n• Take 3 slow breaths yourself — your calm physiology helps lower their anxiety levels.`;
 
-  // llama-3.3-70b-versatile chosen for deeper clinical reasoning across patient history
   const tipText = await callGroq(systemPrompt, userPrompt, fallbackTip, GROQ_MODELS.REASONING);
 
   await dbService.saveCaregiverTip({
@@ -246,18 +295,21 @@ app.post(ROUTES.CAREGIVER_TIP, asyncWrapper(async (req, res) => {
     tip_text: tipText
   });
 
-  res.json({ success: true, guidance: tipText });
+  res.json({
+    success: true,
+    data: { guidance: tipText },
+    guidance: tipText,
+    error: null
+  });
 }));
 
 // 10. Caregiver Patient Trends Query
-// Uses Promise.all to fetch crisisEvents, pulseChecks, and profile concurrently
 app.get(ROUTES.PATIENT_TRENDS, asyncWrapper(async (req, res) => {
   const userId = sanitizeInput(req.query.userId, 100);
   if (!userId) {
     throw new AppError('userId query param is required.', 400);
   }
 
-  // Parallel database reads for maximum efficiency
   const [crisisEvents, pulseChecks, profile] = await Promise.all([
     dbService.getCrisisEvents(userId),
     dbService.getPulseChecks(userId),
@@ -266,23 +318,33 @@ app.get(ROUTES.PATIENT_TRENDS, asyncWrapper(async (req, res) => {
 
   res.json({
     success: true,
+    data: {
+      profile,
+      crisisCount: crisisEvents.length,
+      recentCrises: crisisEvents,
+      pulseChecks
+    },
     profile,
     crisisCount: crisisEvents.length,
     recentCrises: crisisEvents,
-    pulseChecks
+    pulseChecks,
+    error: null
   });
 }));
 
 // 11. Learn Hub Educational Q&A
-// Uses llama-3.3-70b-versatile for comprehensive educational response synthesis
-app.post(ROUTES.LEARN_QUERY, asyncWrapper(async (req, res) => {
-  const query = sanitizeInput(req.body.query);
+app.post(ROUTES.LEARN_QUERY, validateBody(schemas.learnQuery), asyncWrapper(async (req, res) => {
+  const { query } = req.validatedBody;
   const learnSystemPrompt = buildLearnPrompt();
   const fallbackText = `Grounding techniques redirect focus away from racing thoughts and back to the present moment.\n\nKey Strategy - 5-4-3-2-1:\n- 5 things you can SEE\n- 4 things you can TOUCH\n- 3 things you can HEAR\n- 2 things you can SMELL\n- 1 thing you can TASTE`;
 
-  // llama-3.3-70b-versatile chosen for synthesis of SAMHSA and recovery frameworks
-  const responseText = await callGroq(learnSystemPrompt, `Question: "${query}"`, fallbackText, GROQ_MODELS.REASONING);
-  res.json({ success: true, content: responseText });
+  const responseText = await callGroq(learnSystemPrompt, `Question: "${query || ''}"`, fallbackText, GROQ_MODELS.REASONING);
+  res.json({
+    success: true,
+    data: { content: responseText },
+    content: responseText,
+    error: null
+  });
 }));
 
 // Global 404 & Centralized Error Middleware

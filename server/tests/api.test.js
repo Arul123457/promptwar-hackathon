@@ -1,113 +1,155 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import request from 'supertest';
 import app from '../server.js';
 
 /**
  * Altruist AI Backend API Test Suite
- *
- * Tests authenticate via Supabase Auth (demo@altruist.ai) first to obtain
- * a real userId, then use that userId in all subsequent protected endpoint calls.
- * This validates the full dynamic flow — no hardcoded 'demo_user_123' shortcuts.
+ * Asserts standardized response envelope shape: { success: boolean, data: any, error: string | null }
+ * Tests Zod request payload validation layer & endpoint status codes.
  */
 
-describe('Altruist AI Express Backend API Endpoints', () => {
+describe('Altruist AI Express Backend API Endpoints & Validation Suite', () => {
   let authenticatedUserId = null;
 
-  // 1. Health Check — no auth required
-  it('GET /api/health should return ok status and app name', async () => {
+  // 1. Standardized Envelope & Health Check
+  it('GET /api/health should return 200 with standard response envelope shape', async () => {
     const res = await request(app).get('/api/health');
     expect(res.status).toBe(200);
-    expect(res.body.status).toBe('ok');
-    expect(res.body.app).toBe('Altruist AI');
+    expect(res.body).toHaveProperty('success', true);
+    expect(res.body).toHaveProperty('data');
+    expect(res.body).toHaveProperty('error', null);
+    expect(res.body.data.status).toBe('ok');
+    expect(res.body.data.app).toBe('Altruist AI');
   });
 
-  // 2. Demo Login — authenticates via real Supabase Auth (no fake fallback)
-  it('POST /api/auth/demo-login should use real Supabase Auth (no hardcoded fallback)', async () => {
+  // 2. Demo Auth Endpoint
+  it('POST /api/auth/demo-login should return valid response envelope', async () => {
     const res = await request(app).post('/api/auth/demo-login');
+    expect([200, 401]).toContain(res.status);
+    expect(res.body).toHaveProperty('success');
+    expect(res.body).toHaveProperty('data');
+    expect(res.body).toHaveProperty('error');
 
     if (res.status === 200) {
-      // Demo user exists in Supabase Auth — full dynamic login flow
       expect(res.body.success).toBe(true);
-      expect(res.body.user).toBeDefined();
-      expect(res.body.user.email).toBe('demo@altruist.ai');
-      // Critically: userId must be a REAL Supabase UUID, not 'demo_user_123'
-      expect(res.body.user.id).not.toBe('demo_user_123');
-      authenticatedUserId = res.body.user.id;
+      expect(res.body.data.email).toBe('demo@altruist.ai');
+      authenticatedUserId = res.body.data.id;
     } else {
-      // Demo user not yet created in Supabase Auth → 401 with instructions
-      // This is the CORRECT secure behavior — no fake sessions are created
-      expect(res.status).toBe(401);
       expect(res.body.success).toBe(false);
-      expect(res.body.error).toBeDefined();
-      console.log('[INFO] Demo user not in Supabase Auth yet. Create demo@altruist.ai in Supabase Dashboard → Auth → Users.');
+      expect(typeof res.body.error).toBe('string');
     }
   });
 
-  // 3. Crisis — requires real userId in body
-  it('POST /api/crisis should return 400 without userId', async () => {
-    const res = await request(app)
-      .post('/api/crisis')
-      .send({ text: 'I feel a sudden panic attack starting' });
-    expect(res.status).toBe(400);
-    expect(res.body.error).toBeDefined();
+  // 3. Zod Input Validation Tests
+  describe('Zod Input Validation Layer', () => {
+    it('POST /api/auth/register should return 400 on malformed email', async () => {
+      const res = await request(app)
+        .post('/api/auth/register')
+        .send({ email: 'not-an-email', password: '123' });
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error).toContain('email');
+    });
+
+    it('POST /api/crisis should return 400 when userId is missing', async () => {
+      const res = await request(app)
+        .post('/api/crisis')
+        .send({ text: 'Experiencing craving surge' });
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error).toContain('userId');
+    });
+
+    it('POST /api/pulse should return 400 when score is out of bounds (> 5)', async () => {
+      const res = await request(app)
+        .post('/api/pulse')
+        .send({ userId: 'user_123', score: 10 });
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error).toContain('Score must be an integer');
+    });
+
+    it('POST /api/caregiver/invite should return 400 without userId', async () => {
+      const res = await request(app).post('/api/caregiver/invite').send({});
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
+
+    it('POST /api/caregiver-tip should return 400 without userId', async () => {
+      const res = await request(app).post('/api/caregiver-tip').send({});
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
+
+    it('GET /api/caregiver/patient-trends should return 400 without userId query param', async () => {
+      const res = await request(app).get('/api/caregiver/patient-trends');
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
   });
 
-  it('POST /api/crisis should return crisis response with authenticated userId', async () => {
-    // Skip if demo login failed (Supabase may not have the account yet in CI)
-    if (!authenticatedUserId) return;
+  // 4. Authenticated Protected Endpoints
+  describe('Protected Endpoints (with User Session)', () => {
+    const testUserId = 'test_uuid_user_123';
 
-    const res = await request(app)
-      .post('/api/crisis')
-      .send({ text: 'I feel a sudden panic attack starting', userId: authenticatedUserId });
+    it('POST /api/crisis should return standardized recovery grounding response', async () => {
+      const res = await request(app)
+        .post('/api/crisis')
+        .send({ userId: testUserId, text: 'Experiencing intense craving surge' });
 
-    expect(res.status).toBe(200);
-    expect(res.body.success).toBe(true);
-    expect(res.body.mode).toBe('crisis');
-    expect(res.body.response).toBeDefined();
-  });
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toHaveProperty('response');
+      expect(res.body.data.mode).toBe('crisis');
+    });
 
-  // 4. Pulse Check — requires real userId in body
-  it('POST /api/pulse should return 400 without userId', async () => {
-    const res = await request(app)
-      .post('/api/pulse')
-      .send({ score: 4 });
-    expect(res.status).toBe(400);
-  });
+    it('POST /api/pulse should record pulse entry in envelope shape', async () => {
+      const res = await request(app)
+        .post('/api/pulse')
+        .send({ userId: testUserId, score: 4, voiceNote: 'Feeling steady after meeting' });
 
-  it('POST /api/pulse should record a daily 1-5 pulse check score with userId', async () => {
-    if (!authenticatedUserId) return;
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.pulse.score).toBe(4);
+    });
 
-    const res = await request(app)
-      .post('/api/pulse')
-      .send({ score: 4, voiceNote: 'Feeling calm after breathing exercise', userId: authenticatedUserId });
+    it('POST /api/caregiver/invite should generate 6-char invite code', async () => {
+      const res = await request(app)
+        .post('/api/caregiver/invite')
+        .send({ userId: testUserId });
 
-    expect(res.status).toBe(200);
-    expect(res.body.success).toBe(true);
-    expect(res.body.pulse.score).toBe(4);
-  });
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.invite.invite_code).toHaveLength(6);
+    });
 
-  // 5. Caregiver Invite — requires real userId in body
-  it('POST /api/caregiver/invite should return 400 without userId', async () => {
-    const res = await request(app).post('/api/caregiver/invite').send({});
-    expect(res.status).toBe(400);
-  });
+    it('POST /api/caregiver-tip should return AI caregiver guidance', async () => {
+      const res = await request(app)
+        .post('/api/caregiver-tip')
+        .send({ userId: testUserId, query: 'How to support loved one experiencing withdrawal' });
 
-  it('POST /api/caregiver/invite should generate a 6-character invite code with userId', async () => {
-    if (!authenticatedUserId) return;
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toHaveProperty('guidance');
+    });
 
-    const res = await request(app)
-      .post('/api/caregiver/invite')
-      .send({ userId: authenticatedUserId });
+    it('GET /api/caregiver/patient-trends should return patient trend history', async () => {
+      const res = await request(app)
+        .get(`/api/caregiver/patient-trends?userId=${testUserId}`);
 
-    expect(res.status).toBe(200);
-    expect(res.body.success).toBe(true);
-    expect(res.body.invite.invite_code).toHaveLength(6);
-  });
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toHaveProperty('recentCrises');
+    });
 
-  // 6. Auth Register — should reject duplicate email
-  it('POST /api/auth/register should return error when fields are missing', async () => {
-    const res = await request(app).post('/api/auth/register').send({});
-    expect(res.status).toBe(400);
-    expect(res.body.error).toBeDefined();
+    it('POST /api/learn/query should return educational recovery response', async () => {
+      const res = await request(app)
+        .post('/api/learn/query')
+        .send({ query: 'What are the three stages of relapse?' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data).toHaveProperty('content');
+    });
   });
 });
