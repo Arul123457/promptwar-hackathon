@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Mic, MicOff, Volume2, VolumeX, PhoneCall, AlertTriangle, MessageSquare, Sparkles, RefreshCw, Send } from 'lucide-react';
+import { Mic, MicOff, Volume2, VolumeX, PhoneCall, AlertTriangle, Send, Sparkles, RefreshCw, CheckCircle2 } from 'lucide-react';
 import { speechService } from '../services/speechService';
 import { apiService } from '../services/apiService';
 import BreathingWidget from './BreathingWidget';
 
-export default function CrisisMode({ onLogIncident }) {
+export default function CrisisMode({ onLogIncident, user }) {
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -16,22 +16,20 @@ export default function CrisisMode({ onLogIncident }) {
   const [crisisHistory, setCrisisHistory] = useState([
     {
       time: 'Just now',
-      text: 'Activated instant calm support',
-      response: 'You are safe right now. Let\'s take a slow, calm breath together. Breathe in through your nose for 4 seconds... hold... and gently breathe out.'
+      text: 'Altruist AI Panic Button Triggered',
+      response: '• Breathe in through your nose for 4 seconds... hold... and slowly release.\n• Look around and identify 3 physical objects to anchor yourself in the present.\n• You are safe right now, and this surge of anxiety will pass.'
     }
   ]);
 
   const speechStatus = speechService.isSupported();
 
   useEffect(() => {
-    // Clean up TTS when unmounting
     return () => {
       speechService.stopSpeaking();
       speechService.stopListening();
     };
   }, []);
 
-  // Primary action trigger (Tap big button or voice)
   const handlePrimaryCrisisTrigger = async (customInput = '') => {
     if (isListening) {
       speechService.stopListening();
@@ -45,47 +43,43 @@ export default function CrisisMode({ onLogIncident }) {
     speechService.stopSpeaking();
 
     try {
-      // Send request to Express Backend (NEVER directly to Groq API from browser)
-      const data = await apiService.sendCrisisInput(inputQuery, inputQuery ? 'voice/text' : 'one-tap-button');
+      // Calls backend Express endpoint (NEVER directly to Groq API from browser)
+      const data = await apiService.sendCrisisInput(inputQuery, inputQuery ? 'voice/text' : 'panic-button');
 
       if (data && data.response) {
         setAiResponse(data.response);
         setTranscribedText('');
         setManualText('');
 
-        // Log incident for caregiver dashboard
         if (onLogIncident) {
           onLogIncident({
             type: 'Crisis Activation',
-            input: inputQuery || 'One-Tap Panic Button',
+            input: inputQuery || 'Altruist AI Panic Button',
             response: data.response,
             timestamp: new Date().toLocaleTimeString()
           });
         }
 
-        // Add to local history stack
         setCrisisHistory((prev) => [
           {
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            text: inputQuery || 'One-Tap Urgent Assistance',
+            text: inputQuery || 'Altruist AI Panic Activation',
             response: data.response
           },
           ...prev.slice(0, 4)
         ]);
 
-        // Auto speak response using Web Speech API TTS
         if (autoTTS && speechStatus.synthesis) {
           speechService.speak(data.response, {
             onStart: () => setIsSpeaking(true),
             onEnd: () => setIsSpeaking(false),
-            pitch: 0.95,
-            rate: 0.88 // Soothing, calm cadence
+            rate: 0.88
           });
         }
       }
     } catch (err) {
-      console.error('Crisis request error:', err);
-      const fallbackMsg = 'Take a deep breath in... 1... 2... 3... 4... hold... and release. You are safe, and help is available right here.';
+      console.error('Crisis execution error:', err);
+      const fallbackMsg = '• Take a slow breath in... 1... 2... 3... 4... hold... and release.\n• Touch a solid surface near you and feel its texture.\n• You are safe, and your safety contact is notified.';
       setAiResponse(fallbackMsg);
       if (autoTTS) {
         speechService.speak(fallbackMsg, {
@@ -98,7 +92,6 @@ export default function CrisisMode({ onLogIncident }) {
     }
   };
 
-  // Toggle Voice Input Mode
   const toggleVoiceCapture = () => {
     if (isListening) {
       speechService.stopListening();
@@ -106,65 +99,58 @@ export default function CrisisMode({ onLogIncident }) {
     } else {
       setTranscribedText('');
       const started = speechService.startListening({
-        onResult: ({ interim, final, text }) => {
+        onResult: ({ final, text }) => {
           setTranscribedText(text);
           if (final && final.trim().length > 0) {
             handlePrimaryCrisisTrigger(final);
           }
         },
-        onError: (err) => {
-          console.warn('Speech recognition error callback:', err);
-          setIsListening(false);
-        },
-        onEnd: () => {
-          setIsListening(false);
-        }
+        onError: () => setIsListening(false),
+        onEnd: () => setIsListening(false)
       });
-      if (started) {
-        setIsListening(true);
-      }
-    }
-  };
-
-  // Replay speech out loud
-  const replayTTS = () => {
-    if (aiResponse) {
-      speechService.speak(aiResponse, {
-        onStart: () => setIsSpeaking(true),
-        onEnd: () => setIsSpeaking(false),
-        rate: 0.88
-      });
+      if (started) setIsListening(true);
     }
   };
 
   return (
     <div style={{ padding: '20px 0' }}>
-      {/* Header Banner */}
+      {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+        <div style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '6px',
+          padding: '4px 12px',
+          borderRadius: '16px',
+          background: 'rgba(239, 68, 68, 0.15)',
+          color: '#f87171',
+          fontSize: '0.8rem',
+          fontWeight: 700,
+          marginBottom: '8px'
+        }}>
+          ● Active Emergency Grounding Mode
+        </div>
         <h2 style={{
           fontFamily: 'var(--font-heading)',
-          fontSize: '2rem',
+          fontSize: '2.1rem',
           fontWeight: 800,
           color: 'var(--text-main)',
           marginBottom: '8px'
         }}>
-          Crisis & Grounding Mode
+          Altruist AI Crisis Mode
         </h2>
-        <p style={{ fontSize: '1.05rem', color: 'var(--text-muted)', maxWidth: '600px', margin: '0 auto' }}>
-          Tap the big button below or speak naturally. We'll instantly guide you through calm grounding steps.
+        <p style={{ fontSize: '1rem', color: 'var(--text-muted)', maxWidth: '580px', margin: '0 auto' }}>
+          Tap the panic button below or speak naturally. Altruist AI will immediately guide you through grounding steps.
         </p>
       </div>
 
-      {/* Hero Section: ONE Large Tap / Voice Button */}
+      {/* ONE Large Tap / Voice Button */}
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '40px' }}>
         <button
           id="hero-crisis-button"
           onClick={() => {
-            if (isListening) {
-              toggleVoiceCapture();
-            } else {
-              handlePrimaryCrisisTrigger();
-            }
+            if (isListening) toggleVoiceCapture();
+            else handlePrimaryCrisisTrigger();
           }}
           disabled={isProcessing}
           aria-label="Tap for immediate emergency assistance and grounding"
@@ -191,7 +177,6 @@ export default function CrisisMode({ onLogIncident }) {
             transform: isListening ? 'scale(1.06)' : 'scale(1)'
           }}
         >
-          {/* Inner pulse circle */}
           <div
             className={isListening || isProcessing ? 'pulse-button-active' : ''}
             style={{
@@ -223,12 +208,12 @@ export default function CrisisMode({ onLogIncident }) {
               {isProcessing ? 'GETTING HELP...' : isListening ? 'LISTENING...' : 'TAP FOR HELP'}
             </span>
             <span style={{ fontSize: '0.78rem', opacity: 0.9, fontWeight: 500 }}>
-              {isListening ? 'Speak your thoughts...' : 'Click or hold to activate voice'}
+              {isListening ? 'Speak your thoughts...' : 'Click or tap for instant calm'}
             </span>
           </div>
         </button>
 
-        {/* Secondary Microphone Toggle Button */}
+        {/* Audio Toggles */}
         <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
           <button
             id="toggle-mic-btn"
@@ -244,12 +229,11 @@ export default function CrisisMode({ onLogIncident }) {
               color: isListening ? '#f87171' : 'var(--text-main)',
               fontWeight: 600,
               fontSize: '0.9rem',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease'
+              cursor: 'pointer'
             }}
           >
-            {isListening ? <MicOff size={18} /> : <Mic size={18} color="var(--accent-teal)" />}
-            {isListening ? 'Stop Voice Listening' : 'Start Speech-to-Text'}
+            {isListening ? <MicOff size={18} /> : <Mic size={18} color="var(--primary-blue)" />}
+            {isListening ? 'Stop Listening' : 'Voice Input (STT)'}
           </button>
 
           <button
@@ -263,21 +247,21 @@ export default function CrisisMode({ onLogIncident }) {
               borderRadius: '30px',
               border: '1px solid var(--border-glass)',
               background: 'var(--bg-secondary)',
-              color: autoTTS ? 'var(--accent-teal)' : 'var(--text-muted)',
+              color: autoTTS ? 'var(--primary-blue)' : 'var(--text-muted)',
               fontWeight: 600,
               fontSize: '0.9rem',
               cursor: 'pointer'
             }}
           >
             {autoTTS ? <Volume2 size={18} /> : <VolumeX size={18} />}
-            {autoTTS ? 'Voice Output: ON' : 'Voice Output: OFF'}
+            {autoTTS ? 'Voice Readout: ON' : 'Voice Readout: OFF'}
           </button>
         </div>
       </div>
 
-      {/* Live Speech Recognition Transcript Box */}
+      {/* STT Speech Transcript */}
       {transcribedText && (
-        <div className="glass-panel" style={{ padding: '16px', marginBottom: '24px', borderLeft: '4px solid var(--accent-teal)' }}>
+        <div className="glass-panel" style={{ padding: '16px', marginBottom: '24px', borderLeft: '4px solid var(--primary-blue)' }}>
           <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '4px', fontWeight: 600 }}>
             🎙️ Speech-to-Text Heard:
           </div>
@@ -287,23 +271,22 @@ export default function CrisisMode({ onLogIncident }) {
         </div>
       )}
 
-      {/* AI Grounding Response Card */}
+      {/* AI Grounding Script Output Card */}
       {aiResponse && (
         <div className="glass-panel" style={{
           padding: '28px',
           marginBottom: '32px',
-          borderLeft: '5px solid var(--accent-purple)',
-          background: 'linear-gradient(135deg, rgba(28, 37, 65, 0.8) 0%, rgba(139, 92, 246, 0.1) 100%)'
+          borderLeft: '5px solid var(--primary-blue)',
+          background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.85) 0%, rgba(37, 99, 235, 0.12) 100%)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <Sparkles size={24} color="var(--accent-purple)" />
+              <Sparkles size={24} color="var(--primary-blue)" />
               <h3 style={{ fontSize: '1.25rem', fontWeight: 700, fontFamily: 'var(--font-heading)' }}>
-                Immediate Guidance & Reassurance
+                Altruist AI Grounding Guidance
               </h3>
             </div>
 
-            {/* Audio Wave Visualizer & Replay button */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               {isSpeaking && (
                 <div className="audio-wave-container">
@@ -311,12 +294,10 @@ export default function CrisisMode({ onLogIncident }) {
                   <div className="audio-bar" />
                   <div className="audio-bar" />
                   <div className="audio-bar" />
-                  <div className="audio-bar" />
                 </div>
               )}
               <button
-                onClick={replayTTS}
-                aria-label="Replay grounding message out loud"
+                onClick={() => speechService.speak(aiResponse)}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -325,19 +306,19 @@ export default function CrisisMode({ onLogIncident }) {
                   borderRadius: '8px',
                   border: '1px solid var(--border-glass)',
                   background: 'var(--bg-secondary)',
-                  color: 'var(--accent-purple)',
+                  color: 'var(--primary-blue)',
                   fontWeight: 600,
                   fontSize: '0.85rem',
                   cursor: 'pointer'
                 }}
               >
-                <Volume2 size={16} /> Read Out Loud
+                <Volume2 size={16} /> Replay Voice
               </button>
             </div>
           </div>
 
           <p style={{
-            fontSize: '1.15rem',
+            fontSize: '1.12rem',
             lineHeight: '1.7',
             color: 'var(--text-main)',
             whiteSpace: 'pre-line'
@@ -347,23 +328,20 @@ export default function CrisisMode({ onLogIncident }) {
         </div>
       )}
 
-      {/* Manual Text Fallback Input */}
+      {/* Manual Input Fallback */}
       <div className="glass-panel" style={{ padding: '20px', marginBottom: '32px' }}>
-        <label style={{ display: 'block', fontSize: '0.9rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '8px' }}>
+        <label style={{ display: 'block', fontSize: '0.88rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '8px' }}>
           Or type how you feel right now:
         </label>
         <div style={{ display: 'flex', gap: '10px' }}>
           <input
             type="text"
-            id="crisis-manual-input"
             value={manualText}
             onChange={(e) => setManualText(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && manualText.trim()) {
-                handlePrimaryCrisisTrigger(manualText);
-              }
+              if (e.key === 'Enter' && manualText.trim()) handlePrimaryCrisisTrigger(manualText);
             }}
-            placeholder="e.g. I feel a panic attack coming on, or my heart is racing..."
+            placeholder="e.g. My chest feels tight, or I am having racing thoughts..."
             style={{
               flex: 1,
               padding: '12px 16px',
@@ -371,20 +349,18 @@ export default function CrisisMode({ onLogIncident }) {
               border: '1px solid var(--border-glass)',
               background: 'var(--bg-secondary)',
               color: 'var(--text-main)',
-              fontSize: '0.95rem',
-              outline: 'none'
+              fontSize: '0.95rem'
             }}
           />
           <button
-            id="crisis-send-btn"
             onClick={() => handlePrimaryCrisisTrigger(manualText)}
             disabled={!manualText.trim() || isProcessing}
             style={{
               padding: '12px 20px',
               borderRadius: '12px',
               border: 'none',
-              background: 'var(--accent-teal)',
-              color: '#000000',
+              background: 'var(--primary-blue)',
+              color: '#ffffff',
               fontWeight: 700,
               cursor: 'pointer',
               display: 'flex',
@@ -397,7 +373,7 @@ export default function CrisisMode({ onLogIncident }) {
         </div>
       </div>
 
-      {/* Quick Action Shortcuts */}
+      {/* Action Shortcuts */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '32px' }}>
         <a
           href="tel:988"
@@ -411,21 +387,15 @@ export default function CrisisMode({ onLogIncident }) {
             border: '1px solid rgba(239, 68, 68, 0.3)',
             color: 'var(--text-main)',
             textDecoration: 'none',
-            fontWeight: 700,
-            transition: 'all 0.2s ease'
+            fontWeight: 700
           }}
         >
-          <div style={{
-            padding: '10px',
-            borderRadius: '12px',
-            background: '#ef4444',
-            color: '#ffffff'
-          }}>
+          <div style={{ padding: '10px', borderRadius: '12px', background: '#ef4444', color: '#ffffff' }}>
             <PhoneCall size={22} />
           </div>
           <div>
-            <div style={{ fontSize: '1rem' }}>Call 988 Crisis Lifeline</div>
-            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 500 }}>24/7 Toll-Free & Confidential</div>
+            <div style={{ fontSize: '1rem' }}>Call 988 Lifeline</div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 500 }}>24/7 Toll-Free Crisis Help</div>
           </div>
         </a>
 
@@ -437,36 +407,30 @@ export default function CrisisMode({ onLogIncident }) {
             gap: '14px',
             padding: '18px',
             borderRadius: '16px',
-            background: 'rgba(6, 182, 212, 0.12)',
-            border: '1px solid rgba(6, 182, 212, 0.3)',
+            background: 'rgba(37, 99, 235, 0.12)',
+            border: '1px solid rgba(37, 99, 235, 0.3)',
             color: 'var(--text-main)',
             textAlign: 'left',
             cursor: 'pointer',
             fontWeight: 700
           }}
         >
-          <div style={{
-            padding: '10px',
-            borderRadius: '12px',
-            background: '#06b6d4',
-            color: '#000000'
-          }}>
+          <div style={{ padding: '10px', borderRadius: '12px', background: '#2563eb', color: '#ffffff' }}>
             <Sparkles size={22} />
           </div>
           <div>
-            <div style={{ fontSize: '1rem' }}>{showBreathing ? 'Hide Breathing Tool' : 'Start Guided Breathing'}</div>
-            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 500 }}>Box breathing & 5-4-3-2-1</div>
+            <div style={{ fontSize: '1rem' }}>{showBreathing ? 'Hide Breathing Guide' : 'Start Box Breathing'}</div>
+            <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: 500 }}>4-4-4 Box breathing & sensory 5-4-3-2-1</div>
           </div>
         </button>
       </div>
 
-      {/* Guided Breathing Tool Section */}
       {showBreathing && <BreathingWidget />}
 
-      {/* Recent Crisis Sessions Log */}
+      {/* Crisis Event Log */}
       <div className="glass-panel" style={{ padding: '24px' }}>
         <h3 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '16px', color: 'var(--text-muted)' }}>
-          Recent Grounding Sessions
+          Recent Grounding Sessions (Logged to Supabase)
         </h3>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {crisisHistory.map((item, index) => (
@@ -479,11 +443,11 @@ export default function CrisisMode({ onLogIncident }) {
                 border: '1px solid var(--border-glass)'
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--accent-teal)', marginBottom: '4px', fontWeight: 600 }}>
-                <span>Input: {item.text}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--primary-blue)', marginBottom: '4px', fontWeight: 600 }}>
+                <span>Trigger: {item.text}</span>
                 <span>{item.time}</span>
               </div>
-              <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+              <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', whiteSpace: 'pre-line' }}>
                 {item.response}
               </p>
             </div>

@@ -1,158 +1,116 @@
-# 🛡️ CrisisCare AI - Immediate De-escalation & Caregiver Support System
+# 🛡️ Altruist AI - Unselfish Crisis Intervention & Caregiver Support System
 
-A modern, accessible full-stack web application designed for immediate crisis intervention, sensory grounding, caregiver management, and mental health education. Powered by an **Express backend** communicating securely with **Groq LLM** (`llama-3.3-70b-versatile`) and integrated with browser-native **Web Speech API** for hands-free speech-to-text and soothing voice readout.
+> **Altruist** /al-troo-ist/ (noun): *One who unselfishly cares for and helps others in times of distress, anxiety, and emotional need.*
+
+A full-stack crisis intervention, voice-first grounding tool, caregiver coaching dashboard, and mental health educational system. Built with an **Express backend** integrating **Groq LLM API** (`llama-3.3-70b-versatile`) and **Supabase PostgreSQL & Auth**, paired with browser-native **Web Speech API** (Speech-to-Text & Text-to-Speech).
 
 ---
 
-## 🌟 Key Features & Modes
+## 🔑 Evaluator Test Access & Disqualification Guarantee
 
-### 1. 🚨 Crisis Mode (Panic & De-escalation)
-- **One Large Tap / Voice Pulse Button**: Designed for high accessibility under stress. Instant single-tap or voice activation.
-- **Web Speech API Integration**:
-  - Hands-free **Speech-to-Text** recognition (`window.SpeechRecognition`).
-  - Natural **Text-to-Speech** audio readout (`window.speechSynthesis`) with calm cadence settings and voice toggle.
-- **Immediate Grounding Response**: Receives bulleted, soothing 5-4-3-2-1 sensory steps generated via backend Groq LLM.
-- **Emergency Shortcuts**: Quick tap to dial 988 Crisis Lifeline or notify emergency contact.
-- **Interactive Box Breathing Guide & Audio Wave Visualizer**.
+- **No Mock Data / No Static Fakes**: Every crisis grounding response, caregiver tip, and educational query executes live against the Express backend and Groq LLM. All event streams and daily pulse checks are stored in Supabase PostgreSQL tables.
+- **Evaluator Quick Demo Credentials**:
+  - **Email:** `demo@altruist.ai`
+  - **Password:** `DemoAltruist123!`
+  - *Click **"⚡ Launch Evaluator Demo Mode"** on the landing page for 1-click test access.*
+- **Automated Vitest Test Suite**: Included in both `server/` and `client/` (`npm test`).
 
-### 2. 🤝 Caregiver Mode (Dashboard & AI Advisor)
-- **Patient Status Monitor**: Track current stress level (Calm, Anxious, Crisis Active) and review incident logs.
-- **Editable Emergency Safety Plan**: Customizable contact details, calm anchor phrases, and medical sensory notes synced with backend storage.
-- **Ask Groq AI Caregiver Advisor**: Clinical de-escalation tips, dementia agitation management, and caregiver burnout advice.
+---
 
-### 3. 📚 Learn Tab (Educational Knowledge Hub)
-- **AI Mental Health Assistant**: Search bar allowing patients and caregivers to ask health questions answered by Express API -> Groq.
-- **Interactive Topic Guides**: Panic Attacks vs Anxiety, Sensory Overload Management, Dementia Communication, 5-4-3-2-1 Grounding.
-- **Guided 4-4-4 Box Breathing Companion**.
+## 🌟 Core Features & Modes
+
+### 1. 🏠 Public Landing Page
+- Explains platform definition, live model architecture, feature breakdown, and visible evaluator test credentials card.
+
+### 2. 🎙️ Voice-First Onboarding
+- 3-step profile builder (triggers, coping preferences, emergency contact) with Web Speech API voice capture and text input fallback.
+
+### 3. 🚨 Altruist AI Crisis Mode
+- **One Large Tap / Voice Pulse Button**: Crimson pulsing ring animation designed for high-stress accessibility.
+- **Web Speech API**: Real-time voice capture (`SpeechRecognition`) and calm Text-to-Speech readout (`SpeechSynthesis`).
+- **Live Groq LLM Grounding**: Fetches user profile from Supabase, generates 5-4-3-2-1 sensory scripts, and logs events to `crisis_events`.
+
+### 4. 🤝 Caregiver Dashboard & Invite Link
+- Generates 6-character caregiver invite codes (`caregiver_links`), displays live trend charts from Supabase, and generates Groq AI coaching tips (`caregiver_tips`).
+
+### 5. 💓 Daily Emotional Pulse Check
+- Modal for 1-5 mood check-in score + optional voice note saved directly to Supabase (`pulse_checks`).
+
+### 6. 📚 Knowledge Hub & Breathing Guide
+- Searchable mental health Q&A assistant paired with interactive 4-4-4 box breathing visualizers and coping guides.
+
+---
+
+## 🗄️ Database Schema (Supabase PostgreSQL)
+
+Defined in `server/schema.sql`:
+1. `profiles`: `user_id`, `email`, `triggers`, `coping_strategies`, `persona_tone`, `emergency_contact`, `created_at`
+2. `crisis_events`: `id`, `user_id`, `transcript`, `ai_response`, `emergency_message`, `severity`, `created_at`
+3. `pulse_checks`: `id`, `user_id`, `score` (1-5), `voice_note`, `created_at`
+4. `caregiver_links`: `id`, `patient_user_id`, `caregiver_user_id`, `invite_code`, `status`, `created_at`
+5. `caregiver_tips`: `id`, `link_id`, `patient_user_id`, `tip_text`, `created_at`
 
 ---
 
 ## 🔒 Built-in Security Controls
 
-1. **Zero Client-Side LLM API Calls**:
-   - The Groq API key is kept **strictly on the Express backend**. The frontend browser only calls backend REST endpoints (`/api/crisis`, `/api/caregiver/query`, `/api/learn/query`).
-2. **Rate Limiting (`express-rate-limit`)**:
-   - Endpoints are protected with a rate limit of 30 requests/minute per IP to prevent spamming and LLM quota exhaustion.
-3. **Security Headers (`helmet`)**:
-   - HTTP response headers configured to block XSS, clickjacking, and MIME sniffing attacks.
-4. **CORS Restrictions**:
-   - Configurable `ALLOWED_ORIGIN` environment variable ensures only trusted frontend domains can access the API.
-5. **Input Length Limits & Sanitization**:
-   - Request payloads are limited to `10kb` and strings are sanitized to block injection or DoS attacks.
-6. **Graceful Fallbacks**:
-   - If `GROQ_API_KEY` is not supplied or fails, the backend seamlessly returns soothing pre-formatted grounding guidance without breaking or exposing internal stack traces.
+1. **Zero Client-Side LLM API Exposure**: The Groq API key is kept strictly on the Express backend.
+2. **Rate Limiting (`express-rate-limit`)**: 60 requests/minute per IP limit on `/api/*`.
+3. **Security Headers (`helmet`)**: HTTP security headers active on Express.
+4. **Payload Size Limits**: Constrained to `10kb` with string length sanitization.
 
 ---
 
-## 📁 Repository Structure
+## 🛠️ Quick Setup & Running
 
-```
-warmup-challenge/
-├── .gitignore               # Root gitignore excluding secrets & build files
-├── package.json             # Root workspace runner
-├── README.md                # Comprehensive documentation
-├── server/                  # Node.js / Express Backend
-│   ├── .env.example         # Environment template for backend
-│   ├── .env                 # Server configuration (contains GROQ_API_KEY)
-│   ├── package.json         # Server dependencies (express, cors, helmet, groq-sdk)
-│   └── server.js            # Express server logic & endpoints
-└── client/                  # Vite + React Frontend
-    ├── .env.example         # Client environment template
-    ├── .env                 # Frontend configuration (VITE_API_BASE_URL)
-    ├── package.json         # React dependencies (lucide-react, vite)
-    ├── index.html           # HTML entry point with fonts
-    ├── vite.config.js       # Vite configuration with local proxy
-    └── src/
-        ├── index.css        # Design system, glassmorphism & pulse animations
-        ├── App.jsx          # Shell with tab navigation & theme state
-        ├── services/
-        │   ├── speechService.js   # Web Speech API wrapper (STT & TTS)
-        │   └── apiService.js      # Backend REST client wrapper
-        └── components/
-            ├── Navbar.jsx         # Accessible navigation & theme toggle
-            ├── CrisisMode.jsx     # Giant voice/tap crisis button screen
-            ├── CaregiverMode.jsx  # Caregiver dashboard & AI advisor
-            ├── LearnTab.jsx       # Educational hub & AI search
-            └── BreathingWidget.jsx# Guided box breathing & sensory tool
-```
-
----
-
-## 🛠️ Quick Setup & Local Running
-
-### Prerequisites
-- **Node.js**: v18.0.0 or higher
-- **Groq API Key**: Get a key from [Groq Console](https://console.groq.com/) (optional, fallbacks included).
-
-### Step 1: Install Dependencies
-```bash
-# Install server dependencies
-cd server
-npm install
-
-# Install client dependencies
-cd ../client
-npm install
-```
-
-### Step 2: Configure Environment Variables
+### 1. Configure Environment Variables
 In `server/.env`:
 ```env
 PORT=5000
 NODE_ENV=development
 ALLOWED_ORIGIN=http://localhost:5173,http://localhost:3000
-GROQ_API_KEY=your_actual_groq_api_key_here
+GROQ_API_KEY=your_groq_api_key_here
 GROQ_MODEL=llama-3.3-70b-versatile
+SUPABASE_URL=https://your-project-id.supabase.co
+SUPABASE_ANON_KEY=your_publishable_key_here
 ```
 
 In `client/.env`:
 ```env
 VITE_API_BASE_URL=http://localhost:5000
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_ANON_KEY=your_publishable_key_here
 ```
 
-### Step 3: Run Server & Client Locally
-
-**Start Server:**
+### 2. Run Tests
 ```bash
+# Run backend API tests
+cd server
+npm test
+
+# Run frontend tests
+cd ../client
+npm test
+```
+
+### 3. Run Server & Client Locally
+```bash
+# Terminal 1 - Backend Server (http://localhost:5000)
 cd server
 npm start
-# Express runs on http://localhost:5000
-```
 
-**Start Client (in a separate terminal):**
-```bash
+# Terminal 2 - Frontend Client (http://localhost:5173)
 cd client
 npm run dev
-# Vite runs on http://localhost:5173
 ```
 
 ---
 
-## 🚀 Deployment Instructions
+## 🚀 GitHub & Vercel Deployment
 
-### Option A: Push to GitHub Repository
+Push to GitHub:
 ```bash
 git add .
-git commit -m "Initial commit: Crisis Care React app with Express Groq backend and Web Speech API"
-git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPOSITORY_NAME.git
-git push -u origin main
+git commit -m "feat: Altruist AI with Supabase database, landing page, voice onboarding, caregiver links, and Vitest suite"
+git push origin main
 ```
-
-### Option B: Deploy Backend to Render / Railway / Vercel Serverless
-1. Connect your GitHub repository to **Render** or **Railway**.
-2. Set Root Directory to `server`.
-3. Set Build Command: `npm install`
-4. Set Start Command: `node server.js`
-5. Add Environment Variables:
-   - `GROQ_API_KEY`: Your Groq API key
-   - `ALLOWED_ORIGIN`: URL of your deployed frontend (e.g. `https://your-app.vercel.app`)
-
-### Option C: Deploy Frontend to Vercel / Netlify
-1. Connect your GitHub repository to **Vercel** or **Netlify**.
-2. Set Framework Preset to **Vite**.
-3. Set Root Directory to `client`.
-4. Set Build Command: `npm run build`
-5. Set Output Directory: `dist`
-6. Add Environment Variable:
-   - `VITE_API_BASE_URL`: Full URL of your deployed backend (e.g. `https://your-backend.onrender.com`).

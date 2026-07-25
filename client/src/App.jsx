@@ -1,30 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
+import LandingPage from './components/LandingPage';
+import Onboarding from './components/Onboarding';
+import DailyPulseModal from './components/DailyPulseModal';
 import CrisisMode from './components/CrisisMode';
 import CaregiverMode from './components/CaregiverMode';
 import LearnTab from './components/LearnTab';
 import { apiService } from './services/apiService';
-import { Heart, ShieldCheck, LifeBuoy } from 'lucide-react';
+import { ShieldCheck, Heart } from 'lucide-react';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('crisis');
+  const [activeTab, setActiveTab] = useState('landing');
   const [theme, setTheme] = useState('dark');
   const [serverStatus, setServerStatus] = useState(null);
+  const [user, setUser] = useState(null);
+  const [showPulseModal, setShowPulseModal] = useState(false);
   const [incidentLog, setIncidentLog] = useState([]);
 
-  // Load theme and verify Express backend health
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
 
-    // Initial backend health check
     apiService.checkHealth().then((status) => {
       setServerStatus(status);
     });
 
     const interval = setInterval(() => {
-      apiService.checkHealth().then((status) => {
-        setServerStatus(status);
-      });
+      apiService.checkHealth().then((status) => setServerStatus(status));
     }, 15000);
 
     return () => clearInterval(interval);
@@ -34,38 +35,75 @@ export default function App() {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   };
 
+  const handleDemoLogin = async () => {
+    try {
+      const data = await apiService.demoLogin();
+      if (data && data.user) {
+        setUser(data.user);
+        setActiveTab('crisis');
+      }
+    } catch (err) {
+      console.warn('Demo login issue:', err);
+      setUser({ id: 'demo_user_123', email: 'demo@altruist.ai' });
+      setActiveTab('crisis');
+    }
+  };
+
   const handleLogIncident = (incident) => {
     setIncidentLog((prev) => [incident, ...prev]);
   };
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Top Navbar */}
       <Navbar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         theme={theme}
         toggleTheme={toggleTheme}
         serverStatus={serverStatus}
+        onOpenPulse={() => setShowPulseModal(true)}
+        onDemoLogin={handleDemoLogin}
+        user={user}
       />
 
-      {/* Main Content Area */}
       <main className="container" style={{ flex: 1, paddingTop: '20px', paddingBottom: '40px' }}>
+        {activeTab === 'landing' && (
+          <LandingPage
+            onLaunchDemo={handleDemoLogin}
+            onNavigateTab={(tab) => setActiveTab(tab)}
+          />
+        )}
+        {activeTab === 'onboarding' && (
+          <Onboarding
+            onComplete={() => setActiveTab('crisis')}
+          />
+        )}
         {activeTab === 'crisis' && (
-          <CrisisMode onLogIncident={handleLogIncident} />
+          <CrisisMode
+            onLogIncident={handleLogIncident}
+            user={user}
+          />
         )}
         {activeTab === 'caregiver' && (
-          <CaregiverMode incidentLog={incidentLog} />
+          <CaregiverMode
+            incidentLog={incidentLog}
+          />
         )}
         {activeTab === 'learn' && (
           <LearnTab />
         )}
       </main>
 
-      {/* Reassuring Accessible Footer */}
+      {/* Daily Emotional Pulse Modal */}
+      <DailyPulseModal
+        isOpen={showPulseModal}
+        onClose={() => setShowPulseModal(false)}
+      />
+
+      {/* Footer */}
       <footer style={{
         borderTop: '1px solid var(--border-glass)',
-        background: 'rgba(11, 19, 43, 0.9)',
+        background: 'rgba(15, 23, 42, 0.9)',
         padding: '24px 0',
         marginTop: 'auto'
       }}>
@@ -79,8 +117,8 @@ export default function App() {
           color: 'var(--text-muted)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <ShieldCheck size={18} color="var(--accent-teal)" />
-            <span><strong>CrisisCare AI</strong> • Secure Express Backend & Groq LLM Integration</span>
+            <ShieldCheck size={18} color="var(--primary-blue)" />
+            <span><strong>Altruist AI</strong> • Powered by Groq LLM & Supabase PostgreSQL</span>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>

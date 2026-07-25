@@ -1,7 +1,7 @@
 /**
- * Backend API Client Service
- * Encapsulates all server endpoint communications.
- * NEVER calls Groq API directly from browser.
+ * Backend API Client Service for Altruist AI
+ * Routes calls to Express server endpoints.
+ * NEVER calls Groq or internal APIs directly from the browser.
  */
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
@@ -18,7 +18,7 @@ async function postJSON(endpoint, data) {
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.error || `Server returned error status: ${response.status}`);
+    throw new Error(errorData.error || `Server error status: ${response.status}`);
   }
 
   return response.json();
@@ -34,44 +34,51 @@ async function getJSON(endpoint) {
   });
 
   if (!response.ok) {
-    throw new Error(`Server returned status: ${response.status}`);
+    throw new Error(`Server status: ${response.status}`);
   }
 
   return response.json();
 }
 
 export const apiService = {
-  // Check backend server health and Groq config status
   async checkHealth() {
     try {
       return await getJSON('/api/health');
     } catch (err) {
-      console.warn('Backend server connection issue:', err.message);
-      return { status: 'offline', groqConfigured: false };
+      console.warn('Backend server status check:', err.message);
+      return { status: 'offline', groqConfigured: false, supabaseConfigured: false };
     }
   },
 
-  // Crisis Mode request
+  async demoLogin() {
+    return await postJSON('/api/auth/demo-login', {});
+  },
+
+  async saveOnboardingProfile(profileData) {
+    return await postJSON('/api/onboarding', profileData);
+  },
+
   async sendCrisisInput(text, type = 'voice') {
     return await postJSON('/api/crisis', { text, type });
   },
 
-  // Caregiver AI advice query
-  async askCaregiverAdvisor(query, patientState = 'calm') {
-    return await postJSON('/api/caregiver/query', { query, patientState });
+  async saveDailyPulse(pulseData) {
+    return await postJSON('/api/pulse', pulseData);
   },
 
-  // Learn Tab educational query
-  async queryLearnHub(query, topic = 'Mental Health') {
-    return await postJSON('/api/learn/query', { query, topic });
+  async generateCaregiverInvite() {
+    return await postJSON('/api/caregiver/invite', {});
   },
 
-  // Safety plan getters & setters
-  async getSafetyPlan() {
-    return await getJSON('/api/caregiver/safety-plan');
+  async askCaregiverAdvisor(query) {
+    return await postJSON('/api/caregiver-tip', { query });
   },
 
-  async updateSafetyPlan(planData) {
-    return await postJSON('/api/caregiver/safety-plan', planData);
+  async fetchPatientTrends() {
+    return await getJSON('/api/caregiver/patient-trends');
+  },
+
+  async queryLearnHub(query) {
+    return await postJSON('/api/learn/query', { query });
   }
 };

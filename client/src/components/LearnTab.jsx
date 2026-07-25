@@ -16,12 +16,12 @@ export default function LearnTab() {
       category: 'Psychology',
       icon: '🧠',
       summary: 'Learn the physiological triggers of panic attacks and how to reset your nervous system.',
-      content: `A panic attack is a sudden surge of intense fear or discomfort that reaches a peak within minutes. Common symptoms include rapid heart rate, shortness of breath, chest tightness, and dizziness.
+      content: `A panic attack is a sudden surge of intense fear that reaches a peak within minutes.
       
       Key Steps to Cope:
       1. Acknowledge: Remind yourself "This is panic, it is uncomfortable, but it is NOT dangerous and WILL pass."
       2. Grounding: Engage your 5 senses to bring your prefrontal cortex back online.
-      3. Controlled Breathing: Exhale longer than you inhale (4 sec in, 6 sec out) to activate the parasympathetic nervous system.`
+      3. Controlled Breathing: Exhale longer than you inhale (4 sec in, 6 sec out).`
     },
     {
       id: 'sensory',
@@ -34,7 +34,7 @@ export default function LearnTab() {
       Action Plan:
       - Noise Control: Use noise-canceling headphones or earplugs.
       - Lighting: Switch off fluorescent overheads; opt for soft lamps or dim blue light filters.
-      - Micro-breaks: Retreat to a designated quiet "safe zone" for 10 minutes when feeling overwhelmed.`
+      - Micro-breaks: Retreat to a designated quiet "safe zone" for 10 minutes.`
     },
     {
       id: 'dementia',
@@ -80,7 +80,7 @@ export default function LearnTab() {
       }
     } catch (err) {
       console.error('Learn search error:', err);
-      setAiAnswer('Grounding exercises help redirect attention away from anxious thoughts and back to the present moment.');
+      setAiAnswer('• 5-4-3-2-1 Grounding helps redirect focus away from racing thoughts and back to the present moment.');
     } finally {
       setIsLoading(false);
     }
@@ -94,8 +94,8 @@ export default function LearnTab() {
           <div style={{
             padding: '10px',
             borderRadius: '12px',
-            background: 'rgba(6, 182, 212, 0.2)',
-            color: 'var(--accent-teal)'
+            background: 'rgba(59, 130, 246, 0.15)',
+            color: 'var(--primary-blue)'
           }}>
             <BookOpen size={28} />
           </div>
@@ -106,7 +106,7 @@ export default function LearnTab() {
               fontWeight: 800,
               color: 'var(--text-main)'
             }}>
-              Mental Health & Caregiver Knowledge Hub
+              Altruist AI Knowledge Hub
             </h2>
             <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)' }}>
               Explore evidence-based coping guides and ask Groq AI any mental health or caregiving question.
@@ -118,7 +118,7 @@ export default function LearnTab() {
       {/* AI Q&A Search Box */}
       <div className="glass-panel" style={{ padding: '28px', marginBottom: '32px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-          <Sparkles size={22} color="var(--accent-teal)" />
+          <Sparkles size={22} color="var(--primary-blue)" />
           <h3 style={{ fontSize: '1.25rem', fontWeight: 700, fontFamily: 'var(--font-heading)' }}>
             Ask Groq Mental Health AI
           </h3>
@@ -128,13 +128,12 @@ export default function LearnTab() {
           <div style={{ position: 'relative', flex: 1 }}>
             <input
               type="text"
-              id="learn-search-input"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleSearchSubmit();
               }}
-              placeholder="e.g. How to stop racing thoughts at night? Or coping with panic attacks..."
+              placeholder="Ask any coping question (e.g., How to manage panic attacks at night?)..."
               style={{
                 width: '100%',
                 padding: '14px 16px 14px 44px',
@@ -149,15 +148,14 @@ export default function LearnTab() {
           </div>
 
           <button
-            id="learn-search-btn"
             onClick={() => handleSearchSubmit()}
             disabled={isLoading || !searchQuery.trim()}
             style={{
               padding: '14px 24px',
               borderRadius: '12px',
               border: 'none',
-              background: 'var(--accent-teal)',
-              color: '#000000',
+              background: 'var(--primary-blue)',
+              color: '#ffffff',
               fontWeight: 700,
               cursor: 'pointer',
               display: 'flex',
@@ -169,13 +167,12 @@ export default function LearnTab() {
           </button>
         </div>
 
-        {/* AI Answer Output */}
         {aiAnswer && (
           <div style={{
             padding: '20px',
             borderRadius: '14px',
             background: 'var(--bg-secondary)',
-            borderLeft: '4px solid var(--accent-teal)',
+            borderLeft: '4px solid var(--primary-blue)',
             lineHeight: '1.7',
             whiteSpace: 'pre-line',
             color: 'var(--text-main)'
@@ -185,12 +182,11 @@ export default function LearnTab() {
         )}
       </div>
 
-      {/* Interactive Breathing Companion */}
       <BreathingWidget />
 
-      {/* Educational Article Library Grid */}
+      {/* Article Library */}
       <h3 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '20px', color: 'var(--text-main)' }}>
-        Recommended Learning Guides
+        Recommended Coping Guides
       </h3>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
@@ -199,12 +195,9 @@ export default function LearnTab() {
             key={article.id}
             className="glass-panel glass-panel-interactive"
             onClick={() => setSelectedTopic(selectedTopic?.id === article.id ? null : article)}
-            style={{ padding: '24px', cursor: 'pointer' }}
+            style={{ padding: '24px' }}
           >
-            <div style={{ fontSize: '2rem', marginBottom: '12px' }}>
-              {article.icon}
-            </div>
-
+            <div style={{ fontSize: '2rem', marginBottom: '12px' }}>{article.icon}</div>
             <span style={{
               display: 'inline-block',
               padding: '3px 10px',
@@ -212,21 +205,18 @@ export default function LearnTab() {
               fontSize: '0.75rem',
               fontWeight: 700,
               background: 'var(--bg-secondary)',
-              color: 'var(--accent-teal)',
+              color: 'var(--primary-blue)',
               marginBottom: '8px'
             }}>
               {article.category}
             </span>
-
             <h4 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '8px', color: 'var(--text-main)' }}>
               {article.title}
             </h4>
-
             <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: '1.5' }}>
               {article.summary}
             </p>
 
-            {/* Expanded Content Modal / Accordion */}
             {selectedTopic?.id === article.id && (
               <div style={{
                 marginTop: '16px',
