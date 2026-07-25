@@ -122,27 +122,42 @@ app.post('/api/auth/login', async (req, res) => {
   res.json(result);
 });
 
-// 4. Evaluator Demo Auth Quick Login — uses real Supabase Auth for demo@altruist.ai
+// 4. Evaluator Demo Auth — uses real Supabase Auth for demo@altruist.ai
+// Flow: login → if user not found, auto-register → login again → return real Supabase session
+// No hardcoded fake sessions — all data is tied to a real Supabase Auth user ID.
 app.post('/api/auth/demo-login', async (req, res) => {
   const DEMO_EMAIL = process.env.DEMO_EMAIL || 'demo@altruist.ai';
   const DEMO_PASSWORD = process.env.DEMO_PASSWORD || 'DemoAltruist123!';
-  const result = await dbService.loginUser(DEMO_EMAIL, DEMO_PASSWORD);
-  if (result.success) {
-    res.json(result);
-  } else {
-    // If demo account doesn't exist yet in Supabase, register it automatically
-    const registerResult = await dbService.registerUser(DEMO_EMAIL, DEMO_PASSWORD);
-    if (registerResult.success) {
-      const loginResult = await dbService.loginUser(DEMO_EMAIL, DEMO_PASSWORD);
-      return res.json(loginResult);
-    }
-    // Final fallback: return a memory-mode demo session
-    res.json({
-      success: true,
-      user: { id: 'demo_user_123', email: DEMO_EMAIL, role: 'Demo User (Memory Mode)' },
-      profile: null
+
+  // Step 1: Try logging in first (account may already exist)
+  const loginResult = await dbService.loginUser(DEMO_EMAIL, DEMO_PASSWORD);
+  if (loginResult.success) {
+    return res.json(loginResult);
+  }
+
+  // Step 2: Account doesn't exist — auto-register in Supabase Auth
+  const registerResult = await dbService.registerUser(DEMO_EMAIL, DEMO_PASSWORD);
+  if (!registerResult.success) {
+    // Registration failed — likely because Supabase requires email confirmation
+    // or the email is already registered but password is wrong.
+    return res.status(401).json({
+      success: false,
+      error: `Demo account setup failed: ${registerResult.error}. Please create the demo user manually in Supabase Authentication > Users with email: ${DEMO_EMAIL} and password: ${DEMO_PASSWORD}, then try again.`
     });
   }
+
+  // Step 3: Registration succeeded — now login with the new account
+  const finalLogin = await dbService.loginUser(DEMO_EMAIL, DEMO_PASSWORD);
+  if (finalLogin.success) {
+    return res.json(finalLogin);
+  }
+
+  // Step 4: Registration succeeded but login immediately failed
+  // (Supabase may require email confirmation — need to disable confirmation in project settings)
+  return res.status(401).json({
+    success: false,
+    error: 'Demo account was registered but login requires email confirmation. In Supabase Dashboard → Authentication → Providers → Email, disable "Confirm email" and try again.'
+  });
 });
 
 // 5. Voice Onboarding Profile Save

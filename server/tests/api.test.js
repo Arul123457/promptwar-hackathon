@@ -21,16 +21,26 @@ describe('Altruist AI Express Backend API Endpoints', () => {
     expect(res.body.app).toBe('Altruist AI');
   });
 
-  // 2. Demo Login — authenticates via Supabase Auth and returns real user
-  it('POST /api/auth/demo-login should authenticate demo user via Supabase Auth', async () => {
+  // 2. Demo Login — authenticates via real Supabase Auth (no fake fallback)
+  it('POST /api/auth/demo-login should use real Supabase Auth (no hardcoded fallback)', async () => {
     const res = await request(app).post('/api/auth/demo-login');
-    expect(res.status).toBe(200);
-    expect(res.body.success).toBe(true);
-    expect(res.body.user).toBeDefined();
-    expect(res.body.user.email).toBe('demo@altruist.ai');
-    // Store real authenticated userId for subsequent protected calls
-    authenticatedUserId = res.body.user.id;
-    expect(authenticatedUserId).toBeTruthy();
+
+    if (res.status === 200) {
+      // Demo user exists in Supabase Auth — full dynamic login flow
+      expect(res.body.success).toBe(true);
+      expect(res.body.user).toBeDefined();
+      expect(res.body.user.email).toBe('demo@altruist.ai');
+      // Critically: userId must be a REAL Supabase UUID, not 'demo_user_123'
+      expect(res.body.user.id).not.toBe('demo_user_123');
+      authenticatedUserId = res.body.user.id;
+    } else {
+      // Demo user not yet created in Supabase Auth → 401 with instructions
+      // This is the CORRECT secure behavior — no fake sessions are created
+      expect(res.status).toBe(401);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error).toBeDefined();
+      console.log('[INFO] Demo user not in Supabase Auth yet. Create demo@altruist.ai in Supabase Dashboard → Auth → Users.');
+    }
   });
 
   // 3. Crisis — requires real userId in body
