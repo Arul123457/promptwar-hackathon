@@ -52,7 +52,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           if (onAuthSuccess) onAuthSuccess(res.user);
           onClose();
         } else {
-          setErrorMessage(res.error || 'Registration failed.');
+          setErrorMessage(res.error || 'Registration failed. Please try again.');
         }
       } else {
         const res = await apiService.loginUser(email, password);
@@ -60,15 +60,12 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           if (onAuthSuccess) onAuthSuccess(res.user);
           onClose();
         } else {
-          setErrorMessage(res.error || 'Invalid credentials.');
+          setErrorMessage(res.error || 'Invalid email or password.');
         }
       }
     } catch (err) {
-      console.error('Auth error:', err);
-      // Fallback for seamless evaluator testing
-      const fallbackUser = { id: 'user_' + Date.now(), email };
-      if (onAuthSuccess) onAuthSuccess(fallbackUser);
-      onClose();
+      console.error('Auth network error:', err);
+      setErrorMessage('Network error — please check your connection and try again.');
     } finally {
       setIsSubmitting(false);
     }

@@ -3,7 +3,7 @@ import { Activity, X, Mic, MicOff, Check, Heart } from 'lucide-react';
 import { speechService } from '../services/speechService';
 import { apiService } from '../services/apiService';
 
-export default function DailyPulseModal({ isOpen, onClose }) {
+export default function DailyPulseModal({ isOpen, onClose, user }) {
   const [score, setScore] = useState(3);
   const [voiceNote, setVoiceNote] = useState('');
   const [isListening, setIsListening] = useState(false);
@@ -29,9 +29,9 @@ export default function DailyPulseModal({ isOpen, onClose }) {
   const handleSavePulse = async () => {
     setIsSaving(true);
     try {
-      // Saves daily score + voice note to backend Express -> Supabase pulse_checks
+      // Saves daily score + voice note to backend Express -> Supabase pulse_checks under real userId
       await apiService.saveDailyPulse({
-        userId: 'demo_user_123',
+        userId: user?.id,
         score,
         voiceNote
       });

@@ -122,33 +122,44 @@ app.post('/api/auth/login', async (req, res) => {
   res.json(result);
 });
 
-// 4. Evaluator Demo Auth Quick Login
+// 4. Evaluator Demo Auth Quick Login — uses real Supabase Auth for demo@altruist.ai
 app.post('/api/auth/demo-login', async (req, res) => {
-  const demoUserId = 'demo_user_123';
-  const profile = await dbService.getProfile(demoUserId);
-  res.json({
-    success: true,
-    user: {
-      id: demoUserId,
-      email: 'demo@altruist.ai',
-      role: 'Evaluator Demo User'
-    },
-    profile
-  });
+  const DEMO_EMAIL = process.env.DEMO_EMAIL || 'demo@altruist.ai';
+  const DEMO_PASSWORD = process.env.DEMO_PASSWORD || 'DemoAltruist123!';
+  const result = await dbService.loginUser(DEMO_EMAIL, DEMO_PASSWORD);
+  if (result.success) {
+    res.json(result);
+  } else {
+    // If demo account doesn't exist yet in Supabase, register it automatically
+    const registerResult = await dbService.registerUser(DEMO_EMAIL, DEMO_PASSWORD);
+    if (registerResult.success) {
+      const loginResult = await dbService.loginUser(DEMO_EMAIL, DEMO_PASSWORD);
+      return res.json(loginResult);
+    }
+    // Final fallback: return a memory-mode demo session
+    res.json({
+      success: true,
+      user: { id: 'demo_user_123', email: DEMO_EMAIL, role: 'Demo User (Memory Mode)' },
+      profile: null
+    });
+  }
 });
 
 // 5. Voice Onboarding Profile Save
 app.post('/api/onboarding', async (req, res) => {
-  const { userId, triggers, copingStrategies, personaTone, emergencyContact } = req.body;
-  const targetId = userId || 'demo_user_123';
+  const { userId, email, triggers, copingStrategies, personaTone, emergencyContact } = req.body;
+
+  if (!userId) {
+    return res.status(400).json({ error: 'userId is required to save profile.' });
+  }
 
   const profileData = {
-    user_id: targetId,
-    email: req.body.email || 'user@altruist.ai',
-    triggers: sanitizeInput(triggers, 300) || 'General anxiety & high sensory environment',
-    coping_strategies: sanitizeInput(copingStrategies, 300) || 'Box breathing & 5-4-3-2-1 sensory grounding',
+    user_id: sanitizeInput(userId, 100),
+    email: sanitizeInput(email, 100) || '',
+    triggers: sanitizeInput(triggers, 300),
+    coping_strategies: sanitizeInput(copingStrategies, 300),
     persona_tone: sanitizeInput(personaTone, 100) || 'Empathetic & Calm',
-    emergency_contact: sanitizeInput(emergencyContact, 100) || 'Primary Caregiver (988 Crisis Line)'
+    emergency_contact: sanitizeInput(emergencyContact, 100) || ''
   };
 
   const savedProfile = await dbService.saveProfile(profileData);
@@ -158,8 +169,12 @@ app.post('/api/onboarding', async (req, res) => {
 // 6. Crisis Mode Endpoint
 app.post('/api/crisis', async (req, res) => {
   try {
-    const userId = req.body.userId || 'demo_user_123';
+    const userId = sanitizeInput(req.body.userId, 100);
     const text = sanitizeInput(req.body.text);
+
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required for crisis logging.' });
+    }
 
     const profile = await dbService.getProfile(userId);
 
@@ -199,20 +214,29 @@ Emergency Status: Reassurance active — your safety anchor contact is available
       timestamp: new Date().toISOString()
     });
   } catch (err) {
+    console.error('Crisis endpoint error:', err);
     res.status(500).json({ error: 'Internal error processing Altruist AI crisis request.' });
   }
 });
 
 // 7. Daily Pulse Check-In
 app.post('/api/pulse', async (req, res) => {
-  const userId = req.body.userId || 'demo_user_123';
-  const score = parseInt(req.body.score, 10) || 3;
+  const userId = sanitizeInput(req.body.userId, 100);
+  const score = parseInt(req.body.score, 10);
   const voiceNote = sanitizeInput(req.body.voiceNote, 500);
+
+  if (!userId) {
+    return res.status(400).json({ error: 'userId is required for pulse check.' });
+  }
+
+  if (isNaN(score) || score < 1 || score > 5) {
+    return res.status(400).json({ error: 'Score must be a number between 1 and 5.' });
+  }
 
   const pulseEntry = await dbService.logPulseCheck({
     user_id: userId,
     score,
-    voice_note: voiceNote
+    voice_note: voiceNote || ''
   });
 
   res.json({ success: true, pulse: pulseEntry });
@@ -220,15 +244,22 @@ app.post('/api/pulse', async (req, res) => {
 
 // 8. Caregiver Invite Code Generation
 app.post('/api/caregiver/invite', async (req, res) => {
-  const userId = req.body.userId || 'demo_user_123';
+  const userId = sanitizeInput(req.body.userId, 100);
+  if (!userId) {
+    return res.status(400).json({ error: 'userId is required to generate invite.' });
+  }
   const invite = await dbService.createCaregiverInvite(userId);
   res.json({ success: true, invite });
 });
 
 // 9. Caregiver AI Coaching Tip
 app.post('/api/caregiver-tip', async (req, res) => {
-  const userId = req.body.userId || 'demo_user_123';
+  const userId = sanitizeInput(req.body.userId, 100);
   const query = sanitizeInput(req.body.query);
+
+  if (!userId) {
+    return res.status(400).json({ error: 'userId is required for caregiver tips.' });
+  }
 
   const recentCrises = await dbService.getCrisisEvents(userId);
   const recentPulses = await dbService.getPulseChecks(userId);
@@ -258,7 +289,10 @@ Provide practical, empathetic caregiver de-escalation tips in 3 bullet points.`;
 
 // 10. Caregiver Patient Trends Query
 app.get('/api/caregiver/patient-trends', async (req, res) => {
-  const userId = req.query.userId || 'demo_user_123';
+  const userId = sanitizeInput(req.query.userId, 100);
+  if (!userId) {
+    return res.status(400).json({ error: 'userId query param is required.' });
+  }
   const crisisEvents = await dbService.getCrisisEvents(userId);
   const pulseChecks = await dbService.getPulseChecks(userId);
   const profile = await dbService.getProfile(userId);

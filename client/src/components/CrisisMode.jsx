@@ -13,27 +13,40 @@ export default function CrisisMode({ onLogIncident, user }) {
   const [aiResponse, setAiResponse] = useState('');
   const [autoTTS, setAutoTTS] = useState(true);
   const [showBreathing, setShowBreathing] = useState(false);
-  const [crisisHistory, setCrisisHistory] = useState([
-    {
-      time: 'Just now',
-      text: 'Altruist AI Panic Button Triggered',
-      response: '• Breathe in through your nose for 4 seconds... hold... and slowly release.\n• Look around and identify 3 physical objects to anchor yourself in the present.\n• You are safe right now, and this surge of anxiety will pass.'
-    }
-  ]);
+  // Starts empty — populated from Supabase history on mount
+  const [crisisHistory, setCrisisHistory] = useState([]);
 
   const speechStatus = speechService.isSupported();
 
   useEffect(() => {
+    // Load real crisis history from Supabase via backend for this authenticated user
+    if (user?.id) {
+      apiService.fetchPatientTrends(user.id).then((res) => {
+        if (res?.recentCrises?.length > 0) {
+          setCrisisHistory(res.recentCrises.map(e => ({
+            time: new Date(e.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            text: e.transcript,
+            response: e.ai_response
+          })));
+        }
+      }).catch(() => {});
+    }
+
     return () => {
       speechService.stopSpeaking();
       speechService.stopListening();
     };
-  }, []);
+  }, [user?.id]);
 
   const handlePrimaryCrisisTrigger = async (customInput = '') => {
     if (isListening) {
       speechService.stopListening();
       setIsListening(false);
+      return;
+    }
+
+    if (!user?.id) {
+      console.warn('No authenticated user — crisis call skipped.');
       return;
     }
 
@@ -44,7 +57,7 @@ export default function CrisisMode({ onLogIncident, user }) {
 
     try {
       // Calls backend Express endpoint (NEVER directly to Groq API from browser)
-      const data = await apiService.sendCrisisInput(inputQuery, inputQuery ? 'voice/text' : 'panic-button');
+      const data = await apiService.sendCrisisInput(inputQuery, inputQuery ? 'voice/text' : 'panic-button', user.id);
 
       if (data && data.response) {
         setAiResponse(data.response);

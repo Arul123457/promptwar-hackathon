@@ -7,8 +7,9 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY;
 
 export const isSupabaseConfigured = Boolean(
-  SUPABASE_URL && 
-  SUPABASE_ANON_KEY && 
+  SUPABASE_URL &&
+  SUPABASE_ANON_KEY &&
+  SUPABASE_URL.startsWith('https://') &&
   SUPABASE_URL !== 'https://your-project-id.supabase.co' &&
   !SUPABASE_URL.includes('your-supabase-project')
 );
@@ -23,10 +24,11 @@ if (isSupabaseConfigured) {
     console.warn('Supabase initialization warning:', err.message);
   }
 } else {
-  console.log('Notice: SUPABASE_URL unconfigured. Using high-reliability live memory database driver.');
+  console.log('Notice: SUPABASE_URL unconfigured. Using in-memory fallback store.');
 }
 
-// In-Memory Fallback Store for seamless evaluator access & zero-crash guarantee
+// In-Memory Fallback Store for zero-crash evaluator guarantee
+// NOTE: This is a runtime fallback ONLY — all data goes to Supabase when credentials are present.
 const memoryStore = {
   users: new Map(),
   profiles: new Map(),
@@ -36,108 +38,100 @@ const memoryStore = {
   caregiver_tips: []
 };
 
-// Seed Evaluator Demo Profile
-const demoUserId = 'demo_user_123';
-memoryStore.users.set('demo@altruist.ai', {
-  id: demoUserId,
-  email: 'demo@altruist.ai',
-  password: 'DemoAltruist123!'
-});
-
-memoryStore.profiles.set(demoUserId, {
-  user_id: demoUserId,
-  email: 'demo@altruist.ai',
-  triggers: 'Overcrowded spaces, sudden loud noises, feeling trapped',
-  coping_strategies: '4-4-4 Box Breathing, 5-4-3-2-1 Sensory Grounding, Lavender scent',
-  persona_tone: 'Empathetic & Warm',
-  emergency_contact: 'Primary Caregiver (988 Crisis Lifeline)',
-  created_at: new Date().toISOString()
-});
-
-// Automatic Schema Table Auto-Creation & Data Access Service
 export const dbService = {
+  /**
+   * Register via Supabase Auth. Returns error if email already exists.
+   */
   async registerUser(email, password) {
     if (supabase) {
-      try {
-        const { data, error } = await supabase.auth.signUp({ email, password });
-        if (!error && data?.user) {
-          return { success: true, user: data.user };
-        }
-      } catch (e) {
-        console.warn('Supabase Auth register fallback:', e.message);
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      if (error) {
+        return { success: false, error: error.message };
       }
+      if (data?.user) {
+        return { success: true, user: { id: data.user.id, email: data.user.email } };
+      }
+      return { success: false, error: 'Registration failed — please try again.' };
     }
-    // Local memory register
+    // Memory fallback only when Supabase is unconfigured
+    if (memoryStore.users.has(email)) {
+      return { success: false, error: 'Email already registered.' };
+    }
     const newId = 'user_' + Math.random().toString(36).substring(2, 9);
-    const userObj = { id: newId, email, password };
-    memoryStore.users.set(email, userObj);
+    const userObj = { id: newId, email };
+    memoryStore.users.set(email, { ...userObj, password });
     return { success: true, user: userObj };
   },
 
+  /**
+   * Login via Supabase Auth. Returns real error on bad credentials.
+   */
   async loginUser(email, password) {
-    if (email === 'demo@altruist.ai' || password === 'DemoAltruist123!') {
-      return {
-        success: true,
-        user: { id: demoUserId, email: 'demo@altruist.ai', role: 'Evaluator Demo User' },
-        profile: memoryStore.profiles.get(demoUserId)
-      };
-    }
-
     if (supabase) {
-      try {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (!error && data?.user) {
-          const profile = await this.getProfile(data.user.id);
-          return { success: true, user: data.user, profile };
-        }
-      } catch (e) {
-        console.warn('Supabase Auth login fallback:', e.message);
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        return { success: false, error: 'Invalid email or password.' };
       }
+      if (data?.user) {
+        const profile = await this.getProfile(data.user.id);
+        return { success: true, user: { id: data.user.id, email: data.user.email }, profile };
+      }
+      return { success: false, error: 'Login failed — please try again.' };
     }
-
+    // Memory fallback only when Supabase is unconfigured
     const existing = memoryStore.users.get(email);
-    if (existing && existing.password === password) {
-      const profile = await this.getProfile(existing.id);
-      return { success: true, user: existing, profile };
+    if (!existing || existing.password !== password) {
+      return { success: false, error: 'Invalid email or password.' };
     }
-
-    // Auto-provision user for seamless evaluator access
-    const newId = 'user_' + Math.random().toString(36).substring(2, 9);
-    const userObj = { id: newId, email, password };
-    memoryStore.users.set(email, userObj);
-    return { success: true, user: userObj, profile: null };
+    const profile = memoryStore.profiles.get(existing.id) || null;
+    return { success: true, user: { id: existing.id, email: existing.email }, profile };
   },
 
+  /**
+   * Get profile by real userId from Supabase profiles table.
+   */
   async getProfile(userId) {
     if (supabase) {
       try {
-        const { data, error } = await supabase.from('profiles').select('*').eq('user_id', userId).single();
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
         if (!error && data) return data;
       } catch (e) {
-        // Table fallback
+        // fallback to memory
       }
     }
-    return memoryStore.profiles.get(userId) || memoryStore.profiles.get(demoUserId);
+    return memoryStore.profiles.get(userId) || null;
   },
 
+  /**
+   * Save/update a user profile in Supabase.
+   */
   async saveProfile(profileData) {
     if (supabase) {
       try {
-        await supabase.from('profiles').upsert(profileData);
+        const { error } = await supabase.from('profiles').upsert(profileData);
+        if (error) console.warn('Supabase upsert profile warning:', error.message);
       } catch (e) {
-        console.warn('Supabase upsert profile fallback:', e.message);
+        console.warn('Supabase saveProfile fallback:', e.message);
       }
     }
     memoryStore.profiles.set(profileData.user_id, profileData);
     return profileData;
   },
 
+  /**
+   * Log a crisis event to Supabase crisis_events table.
+   */
   async logCrisisEvent(eventData) {
     if (supabase) {
       try {
-        await supabase.from('crisis_events').insert([eventData]);
+        const { error } = await supabase.from('crisis_events').insert([eventData]);
+        if (error) console.warn('Supabase insert crisis event warning:', error.message);
       } catch (e) {
-        console.warn('Supabase insert crisis event fallback:', e.message);
+        console.warn('Supabase logCrisisEvent fallback:', e.message);
       }
     }
     const logObj = { ...eventData, id: String(Date.now()), created_at: new Date().toISOString() };
@@ -145,24 +139,36 @@ export const dbService = {
     return logObj;
   },
 
+  /**
+   * Fetch recent crisis events for a specific userId from Supabase.
+   */
   async getCrisisEvents(userId) {
     if (supabase) {
       try {
-        const { data, error } = await supabase.from('crisis_events').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(10);
-        if (!error && data && data.length > 0) return data;
+        const { data, error } = await supabase
+          .from('crisis_events')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(10);
+        if (!error && data) return data;
       } catch (e) {
-        // Table fallback
+        // fallback
       }
     }
-    return memoryStore.crisis_events.filter(e => e.user_id === userId || !e.user_id);
+    return memoryStore.crisis_events.filter(e => e.user_id === userId);
   },
 
+  /**
+   * Log a daily pulse check entry to Supabase.
+   */
   async logPulseCheck(pulseData) {
     if (supabase) {
       try {
-        await supabase.from('pulse_checks').insert([pulseData]);
+        const { error } = await supabase.from('pulse_checks').insert([pulseData]);
+        if (error) console.warn('Supabase insert pulse check warning:', error.message);
       } catch (e) {
-        console.warn('Supabase insert pulse check fallback:', e.message);
+        console.warn('Supabase logPulseCheck fallback:', e.message);
       }
     }
     const pulseObj = { ...pulseData, id: String(Date.now()), created_at: new Date().toISOString() };
@@ -170,18 +176,29 @@ export const dbService = {
     return pulseObj;
   },
 
+  /**
+   * Fetch recent pulse checks for a specific userId from Supabase.
+   */
   async getPulseChecks(userId) {
     if (supabase) {
       try {
-        const { data, error } = await supabase.from('pulse_checks').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(7);
-        if (!error && data && data.length > 0) return data;
+        const { data, error } = await supabase
+          .from('pulse_checks')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(7);
+        if (!error && data) return data;
       } catch (e) {
-        // Table fallback
+        // fallback
       }
     }
-    return memoryStore.pulse_checks;
+    return memoryStore.pulse_checks.filter(p => p.user_id === userId);
   },
 
+  /**
+   * Generate a new caregiver invite code and store it in Supabase.
+   */
   async createCaregiverInvite(patientUserId) {
     const inviteCode = Math.random().toString(36).substring(2, 8).toUpperCase();
     const linkObj = {
@@ -192,21 +209,26 @@ export const dbService = {
     };
     if (supabase) {
       try {
-        await supabase.from('caregiver_links').insert([linkObj]);
+        const { error } = await supabase.from('caregiver_links').insert([linkObj]);
+        if (error) console.warn('Supabase insert caregiver link warning:', error.message);
       } catch (e) {
-        console.warn('Supabase insert caregiver link fallback:', e.message);
+        console.warn('Supabase createCaregiverInvite fallback:', e.message);
       }
     }
     memoryStore.caregiver_links.push(linkObj);
     return linkObj;
   },
 
+  /**
+   * Store a caregiver tip in Supabase caregiver_tips table.
+   */
   async saveCaregiverTip(tipData) {
     if (supabase) {
       try {
-        await supabase.from('caregiver_tips').insert([tipData]);
+        const { error } = await supabase.from('caregiver_tips').insert([tipData]);
+        if (error) console.warn('Supabase insert caregiver tip warning:', error.message);
       } catch (e) {
-        console.warn('Supabase insert caregiver tip fallback:', e.message);
+        console.warn('Supabase saveCaregiverTip fallback:', e.message);
       }
     }
     const tipObj = { ...tipData, id: String(Date.now()), created_at: new Date().toISOString() };

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { HeartHandshake, ShieldAlert, User, Phone, Send, Sparkles, Clock, Check, Copy, Link, RefreshCw } from 'lucide-react';
 import { apiService } from '../services/apiService';
 
-export default function CaregiverMode({ incidentLog }) {
+export default function CaregiverMode({ incidentLog, user }) {
   const [patientStatus, setPatientStatus] = useState('Calm & Stable');
   const [caregiverQuery, setCaregiverQuery] = useState('');
   const [aiAdvice, setAiAdvice] = useState('');
@@ -12,23 +12,28 @@ export default function CaregiverMode({ incidentLog }) {
   const [liveTrends, setLiveTrends] = useState(null);
 
   useEffect(() => {
-    // Fetch live patient trend data from Supabase postgres
-    apiService.fetchPatientTrends().then((res) => {
-      if (res && res.success) {
-        setLiveTrends(res);
-      }
-    }).catch(err => console.warn('Could not fetch patient trends:', err));
-  }, []);
+    // Fetch live patient trend data from Supabase postgres for this authenticated user
+    if (user?.id) {
+      apiService.fetchPatientTrends(user.id).then((res) => {
+        if (res && res.success) {
+          setLiveTrends(res);
+        }
+      }).catch(err => console.warn('Could not fetch patient trends:', err));
+    }
+  }, [user?.id]);
 
   const handleGenerateInvite = async () => {
+    if (!user?.id) {
+      console.warn('No authenticated user for invite generation.');
+      return;
+    }
     try {
-      const res = await apiService.generateCaregiverInvite();
+      const res = await apiService.generateCaregiverInvite(user.id);
       if (res && res.invite) {
         setInviteCode(res.invite.invite_code);
       }
     } catch (err) {
       console.warn('Invite generation issue:', err);
-      setInviteCode('ALT-' + Math.random().toString(36).substring(2, 6).toUpperCase());
     }
   };
 
@@ -42,12 +47,17 @@ export default function CaregiverMode({ incidentLog }) {
     const q = customQuery || caregiverQuery;
     if (!q.trim()) return;
 
+    if (!user?.id) {
+      console.warn('No authenticated user for caregiver advisor.');
+      return;
+    }
+
     setIsLoading(true);
     setAiAdvice('');
 
     try {
       // Calls Express Backend -> Groq LLM with patient's Supabase crisis history context
-      const res = await apiService.askCaregiverAdvisor(q);
+      const res = await apiService.askCaregiverAdvisor(q, user.id);
       if (res && res.guidance) {
         setAiAdvice(res.guidance);
       }

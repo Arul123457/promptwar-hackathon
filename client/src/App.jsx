@@ -86,6 +86,7 @@ export default function App() {
         )}
         {activeTab === 'onboarding' && (
           <Onboarding
+            user={user}
             onComplete={() => {
               if (!user) setShowAuthModal(true);
               else setActiveTab('crisis');
@@ -101,6 +102,7 @@ export default function App() {
         {activeTab === 'caregiver' && (
           <CaregiverMode
             incidentLog={incidentLog}
+            user={user}
           />
         )}
         {activeTab === 'learn' && (
@@ -119,6 +121,7 @@ export default function App() {
       <DailyPulseModal
         isOpen={showPulseModal}
         onClose={() => setShowPulseModal(false)}
+        user={user}
       />
 
       {/* Footer */}

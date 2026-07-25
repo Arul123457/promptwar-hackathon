@@ -66,24 +66,25 @@ export const apiService = {
     return await postJSON('/api/onboarding', profileData);
   },
 
-  async sendCrisisInput(text, type = 'voice') {
-    return await postJSON('/api/crisis', { text, type });
+  async sendCrisisInput(text, type = 'voice', userId) {
+    return await postJSON('/api/crisis', { text, type, userId });
   },
 
   async saveDailyPulse(pulseData) {
     return await postJSON('/api/pulse', pulseData);
   },
 
-  async generateCaregiverInvite() {
-    return await postJSON('/api/caregiver/invite', {});
+  async generateCaregiverInvite(userId) {
+    return await postJSON('/api/caregiver/invite', { userId });
   },
 
-  async askCaregiverAdvisor(query) {
-    return await postJSON('/api/caregiver-tip', { query });
+  async askCaregiverAdvisor(query, userId) {
+    return await postJSON('/api/caregiver-tip', { query, userId });
   },
 
-  async fetchPatientTrends() {
-    return await getJSON('/api/caregiver/patient-trends');
+  async fetchPatientTrends(userId) {
+    if (!userId) return { success: false };
+    return await getJSON(`/api/caregiver/patient-trends?userId=${encodeURIComponent(userId)}`);
   },
 
   async queryLearnHub(query) {

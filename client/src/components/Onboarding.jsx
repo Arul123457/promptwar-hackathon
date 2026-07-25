@@ -3,7 +3,7 @@ import { Mic, MicOff, CheckCircle2, ArrowRight, Sparkles, User, ShieldAlert, Hea
 import { speechService } from '../services/speechService';
 import { apiService } from '../services/apiService';
 
-export default function Onboarding({ onComplete }) {
+export default function Onboarding({ onComplete, user }) {
   const [step, setStep] = useState(1);
   const [isListening, setIsListening] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,9 +43,15 @@ export default function Onboarding({ onComplete }) {
   const handleSubmitProfile = async () => {
     setIsSubmitting(true);
     try {
-      // Save profile to Express Backend -> Supabase postgres
+      // Save profile to Express Backend -> Supabase postgres under real user ID
+      if (!user?.id) {
+        console.warn('No authenticated user ID available for profile save.');
+        if (onComplete) onComplete(formData);
+        return;
+      }
       await apiService.saveOnboardingProfile({
-        userId: 'demo_user_123',
+        userId: user.id,
+        email: user.email || '',
         ...formData
       });
       if (onComplete) onComplete(formData);
