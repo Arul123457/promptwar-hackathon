@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Key, Mail, Lock, X, CheckCircle, ShieldCheck, ArrowRight, UserPlus, LogIn } from 'lucide-react';
+import { Key, Mail, Lock, X, ShieldCheck, UserPlus, LogIn, AlertCircle } from 'lucide-react';
 import { apiService } from '../services/apiService';
 
 export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
@@ -10,11 +10,6 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
   const [errorMessage, setErrorMessage] = useState('');
 
   if (!isOpen) return null;
-
-  const handleAutoFillDemo = () => {
-    setEmail('demo@altruist.ai');
-    setPassword('DemoAltruist123!');
-  };
 
   const handleQuickDemoLogin = async () => {
     setIsSubmitting(true);
@@ -37,6 +32,12 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (tab === 'register') {
+      setErrorMessage('Registration is temporarily restricted for security concerns during evaluation. Please click "⚡ 1-Click Demo Access" to log in.');
+      return;
+    }
+
     if (!email || !password) {
       setErrorMessage('Please enter both email and password.');
       return;
@@ -46,26 +47,16 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
     setErrorMessage('');
 
     try {
-      if (tab === 'register') {
-        const res = await apiService.registerUser(email, password);
-        if (res && res.success) {
-          if (onAuthSuccess) onAuthSuccess(res.user);
-          onClose();
-        } else {
-          setErrorMessage(res.error || 'Registration failed. Please try again.');
-        }
+      const res = await apiService.loginUser(email, password);
+      if (res && res.success) {
+        if (onAuthSuccess) onAuthSuccess(res.user);
+        onClose();
       } else {
-        const res = await apiService.loginUser(email, password);
-        if (res && res.success) {
-          if (onAuthSuccess) onAuthSuccess(res.user);
-          onClose();
-        } else {
-          setErrorMessage(res.error || 'Invalid email or password.');
-        }
+        setErrorMessage(res.error || 'Invalid email or password. You can use ⚡ 1-Click Demo Access.');
       }
     } catch (err) {
       console.error('Auth network error:', err);
-      setErrorMessage('Network error — please check your connection and try again.');
+      setErrorMessage('Network error — please check your connection or use ⚡ 1-Click Demo Access.');
     } finally {
       setIsSubmitting(false);
     }
@@ -110,7 +101,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
         </button>
 
         {/* Modal Header */}
-        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
           <div style={{
             width: '48px',
             height: '48px',
@@ -132,57 +123,38 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           </p>
         </div>
 
-        {/* Evaluator Test Credentials Banner */}
+        {/* Evaluator 1-Click Demo Login Banner (Fill Credentials button removed) */}
         <div style={{
           padding: '14px',
           borderRadius: '12px',
-          background: 'var(--bg-page)',
+          background: 'rgba(59, 130, 246, 0.06)',
           border: '1px dashed var(--secondary-blue)',
-          marginBottom: '24px'
+          marginBottom: '20px'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px', fontSize: '0.85rem', fontWeight: 700, color: 'var(--primary-blue)' }}>
-            <Key size={16} /> Visible Evaluator Demo Credentials:
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', fontSize: '0.85rem', fontWeight: 700, color: 'var(--primary-blue)' }}>
+            <Key size={16} /> Evaluator Quick Access:
           </div>
           <div style={{ fontSize: '0.82rem', color: 'var(--text-body)', marginBottom: '10px' }}>
-            Email: <strong style={{ color: 'var(--text-heading)' }}>demo@altruist.ai</strong><br />
-            Password: <strong style={{ color: 'var(--text-heading)' }}>DemoAltruist123!</strong>
+            Email: <strong style={{ color: 'var(--text-heading)' }}>demo@altruist.ai</strong> | Password: <strong style={{ color: 'var(--text-heading)' }}>DemoAltruist123!</strong>
           </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button
-              onClick={handleAutoFillDemo}
-              type="button"
-              style={{
-                flex: 1,
-                padding: '6px 10px',
-                borderRadius: '8px',
-                border: '1px solid var(--border)',
-                background: '#ffffff',
-                color: 'var(--primary-blue)',
-                fontSize: '0.78rem',
-                fontWeight: 700,
-                cursor: 'pointer'
-              }}
-            >
-              Fill Credentials
-            </button>
-            <button
-              onClick={handleQuickDemoLogin}
-              type="button"
-              style={{
-                flex: 1,
-                padding: '6px 10px',
-                borderRadius: '8px',
-                border: 'none',
-                background: 'var(--primary-blue)',
-                color: '#ffffff',
-                fontSize: '0.78rem',
-                fontWeight: 700,
-                cursor: 'pointer'
-              }}
-            >
-              ⚡ 1-Click Demo Login
-            </button>
-          </div>
+          <button
+            onClick={handleQuickDemoLogin}
+            type="button"
+            style={{
+              width: '100%',
+              padding: '10px 14px',
+              borderRadius: '8px',
+              border: 'none',
+              background: 'var(--primary-blue)',
+              color: '#ffffff',
+              fontSize: '0.88rem',
+              fontWeight: 800,
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(30, 58, 138, 0.25)'
+            }}
+          >
+            ⚡ 1-Click Demo Access
+          </button>
         </div>
 
         {/* Tab Switcher: Login / Register */}
@@ -191,7 +163,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           background: 'var(--bg-page)',
           padding: '4px',
           borderRadius: '10px',
-          marginBottom: '20px',
+          marginBottom: '16px',
           border: '1px solid var(--border)'
         }}>
           <button
@@ -214,7 +186,10 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           </button>
           <button
             type="button"
-            onClick={() => { setTab('register'); setErrorMessage(''); }}
+            onClick={() => {
+              setTab('register');
+              setErrorMessage('Registration is temporarily restricted for security concerns during evaluation. Please click "⚡ 1-Click Demo Access" to proceed.');
+            }}
             style={{
               flex: 1,
               padding: '8px',
@@ -232,7 +207,30 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
           </button>
         </div>
 
-        {errorMessage && (
+        {/* Security / Restriction Warning Banner on Register */}
+        {tab === 'register' && (
+          <div style={{
+            padding: '12px 14px',
+            borderRadius: '10px',
+            background: 'rgba(239, 68, 68, 0.08)',
+            border: '1px solid rgba(239, 68, 68, 0.3)',
+            color: '#dc2626',
+            fontSize: '0.82rem',
+            marginBottom: '16px',
+            lineHeight: 1.5,
+            fontWeight: 600,
+            display: 'flex',
+            gap: '8px',
+            alignItems: 'flex-start'
+          }}>
+            <AlertCircle size={18} style={{ flexShrink: 0, marginTop: 2 }} />
+            <div>
+              New user registration is disabled for security concerns during evaluation. Please use <strong>⚡ 1-Click Demo Access</strong> to enter the platform.
+            </div>
+          </div>
+        )}
+
+        {errorMessage && tab === 'login' && (
           <div style={{
             padding: '10px 14px',
             borderRadius: '8px',
@@ -257,17 +255,19 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               <input
                 type="email"
                 required
+                disabled={tab === 'register'}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@domain.com"
+                placeholder="demo@altruist.ai"
                 style={{
                   width: '100%',
                   padding: '12px 14px 12px 38px',
                   borderRadius: '10px',
                   border: '1px solid var(--border)',
-                  background: 'var(--bg-page)',
+                  background: tab === 'register' ? '#f1f5f9' : 'var(--bg-page)',
                   color: 'var(--text-heading)',
-                  fontSize: '0.92rem'
+                  fontSize: '0.92rem',
+                  opacity: tab === 'register' ? 0.7 : 1
                 }}
               />
               <Mail size={18} color="var(--text-body)" style={{ position: 'absolute', left: '12px', top: '13px' }} />
@@ -282,6 +282,7 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
               <input
                 type="password"
                 required
+                disabled={tab === 'register'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
@@ -290,9 +291,10 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
                   padding: '12px 14px 12px 38px',
                   borderRadius: '10px',
                   border: '1px solid var(--border)',
-                  background: 'var(--bg-page)',
+                  background: tab === 'register' ? '#f1f5f9' : 'var(--bg-page)',
                   color: 'var(--text-heading)',
-                  fontSize: '0.92rem'
+                  fontSize: '0.92rem',
+                  opacity: tab === 'register' ? 0.7 : 1
                 }}
               />
               <Lock size={18} color="var(--text-body)" style={{ position: 'absolute', left: '12px', top: '13px' }} />
@@ -301,17 +303,17 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
 
           <button
             type="submit"
-            disabled={isSubmitting}
+            disabled={isSubmitting || tab === 'register'}
             style={{
               width: '100%',
               padding: '14px',
               borderRadius: '12px',
               border: 'none',
-              background: 'var(--primary-blue)',
-              color: '#ffffff',
+              background: tab === 'register' ? '#cbd5e1' : 'var(--primary-blue)',
+              color: tab === 'register' ? '#64748b' : '#ffffff',
               fontWeight: 800,
               fontSize: '1rem',
-              cursor: 'pointer',
+              cursor: tab === 'register' ? 'not-allowed' : 'pointer',
               marginTop: '8px',
               display: 'flex',
               alignItems: 'center',
@@ -320,7 +322,11 @@ export default function AuthModal({ isOpen, onClose, onAuthSuccess }) {
             }}
           >
             {tab === 'login' ? <LogIn size={18} /> : <UserPlus size={18} />}
-            {isSubmitting ? 'Processing...' : tab === 'login' ? 'Sign In to Altruist AI' : 'Register Account'}
+            {isSubmitting
+              ? 'Processing...'
+              : tab === 'login'
+                ? 'Sign In to Altruist AI'
+                : 'Registration Disabled (Use Demo Access)'}
           </button>
         </form>
       </div>
